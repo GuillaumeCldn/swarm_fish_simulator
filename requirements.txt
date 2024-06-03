@@ -10,3 +10,4 @@ PyQt6~=6.6.1
 PyYAML
 pyqtgraph
 trimesh
+pyopengl
