@@ -140,7 +140,7 @@ class SwamFish_View(QMainWindow):
         # also add to pybullet
         self.add_polygon_to_env(self.create_cylinder(radius, height, pos, res))
 
-    def add_object(self, mesh_id, mesh):
+    def add_object(self, mesh_id, mesh, text=None):
         v,f = util.box_mesh((0.1,0.1,0.1))
         m0 =  gl.GLMeshItem(vertexes=v,faces=f,drawFaces=False,
                     drawEdges=False,smooth=False,computeNormals=False,shader=None)
@@ -148,6 +148,9 @@ class SwamFish_View(QMainWindow):
         for i, m in enumerate(mesh):
             m.setParentItem(m0)
             self.view.addItem(m)
+        if text is not None:
+            t = gl.GLTextItem(parentItem=m0, pos=[0,0,0.2], text=text)
+            self.view.addItem(t)
         self.mesh_list[mesh_id] = [m0] + mesh
         self.move_object(mesh_id)
         self.view.update()
@@ -159,6 +162,15 @@ class SwamFish_View(QMainWindow):
         self.mesh_list[obj_id][0].resetTransform()
         self.mesh_list[obj_id][0].rotate(np.degrees(angle),x,y,z,local=True)
         self.mesh_list[obj_id][0].translate(pos[0],pos[1],pos[2])
+
+    def add_line(self, pos1, pos2, color=(255, 255, 255, 255)):
+        line = gl.GLLinePlotItem(pos=np.vstack((pos1, pos2)), color=color)
+        self.view.addItem(line)
+        return line
+
+    def move_line(self, line, pos1, pos2, color=(255, 255, 255, 255)):
+        line.setData(pos=np.vstack((pos1, pos2)), color=color)
+
 
 class SwarmFish_Controller(QWidget, Ui_SwarmController):
     speed_setpoint = 1.
@@ -192,7 +204,7 @@ class SwarmFish_Controller(QWidget, Ui_SwarmController):
 
         for d in env.DRONE_IDS:
             mesh = util.bullet2pyqtgraph(d)
-            view.add_object(d, mesh)
+            view.add_object(d, mesh, text=str(d-1)) # FIXME shift due to ground plane in pybullet
 
         #### load params from config file 
         self.params = load_params_from_yaml(ARGS.swarm_config)
@@ -201,6 +213,7 @@ class SwarmFish_Controller(QWidget, Ui_SwarmController):
         self.show()
 
     def update_simulation(self):
+        self.current_time += 1. / self.simulation_freq_hz
         for k, v in enumerate(self.commands):
             state = self.obs[str(k)]["state"]
             cmd, _, _ = self.ctrl[k].computeControl(

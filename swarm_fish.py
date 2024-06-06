@@ -14,7 +14,14 @@ import math
 import swarmfish.swarm_control as sc
 import swarmfish.obstacles as so
 
-TEST_OBSTACLE = False
+TEST_OBSTACLE = True
+SHOW_ARENA = True
+SHOW_INFLUENTIALS = False
+NB_INFLUENTIAL = 2
+
+POS_NOISE = 0.
+SPEED_NOISE = 0.1
+HEADING_NOISE = 0.
 
 class SwarmFish_Scenario(SwarmFish_Controller):
 
@@ -25,7 +32,10 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         arena_radius = 10.
         arena_center = np.array([0., 0., 0.])
         self.arena = so.Arena(center=arena_center[0:2], radius=arena_radius)
-        self.view.add_cylinder(radius=arena_radius, height=0.1, pos=arena_center, color=(0,1,0,1))
+        if SHOW_ARENA:
+            self.view.add_cylinder(radius=arena_radius, height=0.1, pos=arena_center, color=(0,1,0,1))
+
+        self.desired_course = np.zeros(self.num_drones)
 
         if TEST_OBSTACLE:
             obstacle_radius = 0.5
@@ -37,19 +47,24 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                     height=obstacle_z_max-obstacle_z_min,
                     pos=obstacle_center)
 
+        if SHOW_INFLUENTIALS:
+            self.lines = {}
+            for d in env.DRONE_IDS:
+                self.lines[str(d-1)] = [ self.view.add_line(np.zeros(3), np.zeros(3)) for x in range(NB_INFLUENTIAL) ]
+
         if start:
             self.start_simulation()
 
 
     def update_action(self):
         #### Step the simulation ###################################
-        self.current_time += 1. / self.control_freq_hz
 
+        noise = np.random.normal(size=7)
         states = { str(j): sc.State(
-            self.obs[str(j)]["state"][0:3],
-            self.obs[str(j)]["state"][10:13],
-            self.obs[str(j)]["state"][9],
-            self.current_time) for j in range(self.num_drones) }
+            self.obs[str(j)]["state"][0:3] + POS_NOISE*noise[0:3],
+            self.obs[str(j)]["state"][10:13] + SPEED_NOISE*noise[3:6],
+            self.obs[str(j)]["state"][9] + HEADING_NOISE*noise[6],
+            self.current_time, str(j)) for j in range(self.num_drones) }
         #### Compute control for the current state #############
         for uav_id in range(self.num_drones):
             # If you need : obs[str(j)]["state"] include jth vehicle's
@@ -64,21 +79,24 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                     wall = obstacle
                     #print('Obstacle', uav_name, obstacle)
             if uav_id in self.intruders_id:
-                cmd = sc.compute_interactions(state, self.params, [], nb_influent=0, wall=wall, altitude=5., z_min = 1., z_max = 10.)
+                cmd, _ = sc.compute_interactions(state, self.params, [], nb_influent=0, wall=wall, altitude=5., z_min = 1., z_max = 10.)
             else:
                 neighbors = [ states[str(k)] for k in range(self.num_drones) if (k != uav_id) and (k not in self.intruders_id)  ]
                 intruders = [ states[str(k)] for k in self.intruders_id if k != uav_id ]
-                cmd = sc.compute_interactions(state, self.params, neighbors, nb_influent=1, wall=wall,
+                cmd, influentials = sc.compute_interactions(state, self.params, neighbors, nb_influent=NB_INFLUENTIAL, wall=wall,
                         altitude=self.altitude_setpoint, z_min = 1., z_max = 10.,
                         direction=self.direction_setpoint,
                         intruders=intruders)
-            desired_course = sc.wrap_to_pi(state.get_course() + cmd.delta_course)
-            #magnitude = min(max(self.speed_setpoint + cmd.delta_speed, self.params.min_velocity) / self.params.max_velocity, 1.)
-            magnitude = self.speed_setpoint
-            #magnitude = min(max(self.speed_setpoint + cmd.delta_speed, self.params.min_velocity) / self.params.max_velocity, 1.)
+                if SHOW_INFLUENTIALS:
+                    for l, influential in zip(self.lines[uav_name], influentials):
+                        self.view.move_line(l, state.pos, states[influential[1]].pos)
+            #desired_course = sc.wrap_to_pi(state.get_course() + cmd.delta_course)
+            self.desired_course[uav_id] = sc.wrap_to_pi(self.desired_course[uav_id] + cmd.delta_course / self.control_freq_hz)
+            desired_course = self.desired_course[uav_id]
+            #print(f'desired course {uav_name}: {np.degrees(desired_course):0.2f} | {np.degrees(state.get_course()):0.2f} + {np.degrees(cmd.delta_course):0.2f}')
+            magnitude = self.speed_setpoint + cmd.delta_speed # TODO clip min/max
             if uav_id in self.intruders_id:
                 magnitude *= 2.
-            #speed = np.array([math.cos(desired_course), math.sin(desired_course), cmd.delta_vz, magnitude])
             speed = np.array([
                 magnitude * math.cos(desired_course),
                 magnitude * math.sin(desired_course),
@@ -87,9 +105,9 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             self.commands[uav_id] = speed
             #self.action[uav_name] = speed # when actions are speeds directly
 
-            #print('state',uav_id,state)
+            #print(state)
             #print(f' wall {uav_id} | dist {wall[0]:.2f}, angle= {np.degrees(wall[1]):.2f}')
-            #print(f' cmd {uav_id} | {np.degrees(cmd[0]):0.2f}, {cmd[1]:0.2f}, {cmd[2]:0.2f} | desired_course {np.degrees(desired_course):0.2f}')
+            #print(f' cmd {uav_id} | {np.degrees(cmd.delta_course):0.2f}, {cmd.delta_speed:0.3f}, {cmd.delta_vz:0.3f} | desired_course {np.degrees(desired_course):0.2f}')
             #print(' speed',uav_id,speed)
         #print('') # blank line
 
