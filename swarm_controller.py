@@ -140,6 +140,17 @@ class SwamFish_View(QMainWindow):
         # also add to pybullet
         self.add_polygon_to_env(self.create_cylinder(radius, height, pos, res))
 
+    def add_polygon(self, vertices:np.ndarray, height:float, color=(1., 1., 1., 1.)):
+        verts, faces = util.polygon_mesh(vertices, height)
+        mesh = gl.GLMeshItem(vertexes=verts,faces=faces,drawFaces=True,
+                    drawEdges=False,smooth=False,computeNormals=True,
+                    shader='shaded',glOptions='opaque')
+        mesh.setColor(color)
+        self.view.addItem(mesh)
+        # also add to pybullet
+        self.add_polygon_to_env(verts)
+
+
     def add_object(self, mesh_id, mesh, text=None):
         v,f = util.box_mesh((0.1,0.1,0.1))
         m0 =  gl.GLMeshItem(vertexes=v,faces=f,drawFaces=False,

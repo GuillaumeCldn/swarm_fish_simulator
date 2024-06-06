@@ -188,6 +188,43 @@ def box_mesh(size=(1,1,1)):
 
     return vertices,faces
 
+def polygon_mesh(vertices_2D, height):
+    """Calculates vertices and faces for a polygon for visualisation in
+    pyqtgraph/OpenGL.
+
+    Inputs:
+        vertices_2D: 2D position of the vertices (N,2)
+        height: height of the polygon
+        N: number of segments to approximate the circular shape of the cylinder 
+
+    Outputs:
+        vertices: array with on each row the (x,y,z) coordinates of the vertices 
+        faces: array with triangular faces of the cylinder
+
+    Note:
+        The polygon should be convexe and is extruded along the z-axis.
+
+    """
+    import numpy as np
+    import scipy.spatial
+    N = np.shape(vertices_2D)[0] # number of rows
+    vertices = np.zeros((2*N, 3))
+    vertices[0:N,:] = np.hstack((vertices_2D, np.zeros((N,1))))
+    vertices[N:2*N,:] = vertices[0:N,:] + np.hstack((np.zeros((N,2)),height*np.ones((N,1))))
+    faces = np.zeros((N-2+2*N+N-2,3),dtype=np.uint)
+    faces[0:N-2,:] = scipy.spatial.Delaunay(vertices[0:N,0:2],furthest_site=True,qhull_options='QJ').simplices[:,-1::-1]
+    #sides
+    for i in range(N-1):
+        faces[N-2+2*i,:]   = np.array([i,i+1,N+i+1],dtype=np.uint)
+        faces[N-2+2*i+1,:] = np.array([i,N+i+1,N+i],dtype=np.uint)
+    # final one between the last and the first:
+    faces[N-2+2*(N-1),:]   = np.array([N-1,0,N],dtype=np.uint)
+    faces[N-2+2*(N-1)+1,:] = np.array([N-1,N,2*N-1],dtype=np.uint)
+    # top
+    faces[N-2+2*N:N-2+2*N+N-2,:] = N + faces[0:N-2,-1::-1]
+
+    return vertices,faces
+
 
 def visualGeometryType2mesh(shape_data_element):
     def sphere():

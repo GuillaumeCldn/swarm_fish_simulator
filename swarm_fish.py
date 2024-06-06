@@ -31,7 +31,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         #### Init SwarmFish ########################################
         arena_radius = 10.
         arena_center = np.array([0., 0., 0.])
-        self.arena = so.Arena(center=arena_center[0:2], radius=arena_radius)
+        self.arena = so.Arena(center=arena_center[0:2], radius=arena_radius, name="arena")
         if SHOW_ARENA:
             self.view.add_cylinder(radius=arena_radius, height=0.1, pos=arena_center, color=(0,1,0,1))
 
@@ -42,10 +42,13 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             obstacle_center = np.array([0, 4., 0])
             obstacle_z_min = 0.
             obstacle_z_max = 4.
-            self.obstacle = so.CircleObstacle(obstacle_center[0:2], obstacle_radius, obstacle_z_min, obstacle_z_max)
+            self.obstacle = so.CircleObstacle(obstacle_center[0:2], obstacle_radius, obstacle_z_min, obstacle_z_max, name='pole')
             self.view.add_cylinder(radius=obstacle_radius,
                     height=obstacle_z_max-obstacle_z_min,
                     pos=obstacle_center)
+            polygon_vertices = np.array([[1., -1.], [1., 1.], [-2., 1.], [-1., -1.]]) + np.full((4,2),np.array([-3., -4.]))
+            self.polygon = so.PolygonObstacle(polygon_vertices, obstacle_z_min, obstacle_z_max, name="polygon")
+            self.view.add_polygon(vertices=polygon_vertices, height=obstacle_z_max-obstacle_z_min)
 
         if SHOW_INFLUENTIALS:
             self.lines = {}
@@ -74,10 +77,16 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             state = states[uav_name]
             wall = self.arena.get_wall(state, self.params)
             if TEST_OBSTACLE:
-                obstacle = self.obstacle.get_wall(state, self.params)
-                if obstacle is not None and obstacle[0] < 2*self.params.l_w and obstacle[0] < wall[0]:
-                    wall = obstacle
-                    #print('Obstacle', uav_name, obstacle)
+                dist = wall[0]
+                for obs in [self.obstacle, self.polygon]:
+                    w = obs.get_wall(state, self.params)
+                    if w is not None and w[0] < dist:
+                        dist = w[0]
+                        wall = w
+                        print(f'Uav {uav_name} - {dist:.2f} -> {obs} | {w[0]:.2f} {np.degrees(w[1]):.2f}')
+                #if obstacle is not None and obstacle[0] < 2*self.params.l_w and obstacle[0] < wall[0]:
+                #    wall = obstacle
+                #    #print('Obstacle', uav_name, obstacle)
             if uav_id in self.intruders_id:
                 cmd, _ = sc.compute_interactions(state, self.params, [], nb_influent=0, wall=wall, altitude=5., z_min = 1., z_max = 10.)
             else:
