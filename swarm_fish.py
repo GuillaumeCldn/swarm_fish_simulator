@@ -76,26 +76,29 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             uav_name = str(uav_id)
             state = states[uav_name]
             wall = self.arena.get_wall(state, self.params)
+            obstacles = []
             if TEST_OBSTACLE:
-                dist = wall[0]
-                for obs in [self.obstacle, self.polygon]:
-                    w = obs.get_wall(state, self.params)
-                    if w is not None and w[0] < dist:
-                        dist = w[0]
-                        wall = w
-                        print(f'Uav {uav_name} - {dist:.2f} -> {obs} | {w[0]:.2f} {np.degrees(w[1]):.2f}')
+                obstacles = [ o.get_wall(state, self.params) for o in [self.obstacle, self.polygon] if o is not None ]
+                #dist = wall[0]
+                #for obs in [self.obstacle, self.polygon]:
+                #    w = obs.get_wall(state, self.params)
+                #    if w is not None and w[0] < dist:
+                #        dist = w[0]
+                #        wall = w
+                #        print(f'Uav {uav_name} - {dist:.2f} -> {obs} | {w[0]:.2f} {np.degrees(w[1]):.2f}')
                 #if obstacle is not None and obstacle[0] < 2*self.params.l_w and obstacle[0] < wall[0]:
                 #    wall = obstacle
                 #    #print('Obstacle', uav_name, obstacle)
             if uav_id in self.intruders_id:
-                cmd, _ = sc.compute_interactions(state, self.params, [], nb_influent=0, wall=wall, altitude=5., z_min = 1., z_max = 10.)
+                cmd, _ = sc.compute_interactions(state, self.params, [], nb_influent=0,
+                        wall=wall, altitude=5., z_min=1., z_max=10., obstacles=obstacles)
             else:
                 neighbors = [ states[str(k)] for k in range(self.num_drones) if (k != uav_id) and (k not in self.intruders_id)  ]
                 intruders = [ states[str(k)] for k in self.intruders_id if k != uav_id ]
                 cmd, influentials = sc.compute_interactions(state, self.params, neighbors, nb_influent=NB_INFLUENTIAL, wall=wall,
                         altitude=self.altitude_setpoint, z_min = 1., z_max = 10.,
                         direction=self.direction_setpoint,
-                        intruders=intruders)
+                        intruders=intruders, obstacles=obstacles)
                 if SHOW_INFLUENTIALS:
                     for l, influential in zip(self.lines[uav_name], influentials):
                         self.view.move_line(l, state.pos, states[influential[1]].pos)
