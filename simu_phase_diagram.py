@@ -9,7 +9,6 @@ import time
 from datetime import datetime
 import numpy as np
 import math
-from random import random
 
 from swarm_controller import SwarmFish_Environment, ms_of_hz, make_args_parser
 import util
@@ -45,7 +44,7 @@ def run_simulation(ARGS: dict):
         ]
     )
     if ARGS.random_init:
-        INIT_YAW = np.pi*np.random.rand(ARGS.num_drones)
+        INIT_YAW = 2.*np.pi*np.random.rand(ARGS.num_drones)
     else:
         INIT_YAW = np.zeros(ARGS.num_drones)
     INIT_RPYS = np.array([[0.0, 0.0, INIT_YAW[i]] for i in range(ARGS.num_drones)])
