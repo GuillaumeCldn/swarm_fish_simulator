@@ -212,8 +212,13 @@ def polygon_mesh(vertices_2D, height):
     vertices[0:N,:] = np.hstack((vertices_2D, np.zeros((N,1))))
     vertices[N:2*N,:] = vertices[0:N,:] + np.hstack((np.zeros((N,2)),height*np.ones((N,1))))
     faces = np.zeros((N-2+2*N+N-2,3),dtype=np.uint)
-    faces[0:N-2,:] = scipy.spatial.Delaunay(vertices[0:N,0:2],furthest_site=True,qhull_options='QJ').simplices[:,-1::-1]
-    #sides
+    if N > 3:
+        faces[0:N-2,:] = scipy.spatial.Delaunay(vertices[0:N,0:2],furthest_site=True,qhull_options='QJ').simplices[:,-1::-1]
+    elif N == 3:
+        faces[0:N-2,:] = np.array([2,1,0],dtype=np.uint)
+    else:
+        raise Exception('invalid number of vertices')
+    # sides
     for i in range(N-1):
         faces[N-2+2*i,:]   = np.array([i,i+1,N+i+1],dtype=np.uint)
         faces[N-2+2*i+1,:] = np.array([i,N+i+1,N+i],dtype=np.uint)

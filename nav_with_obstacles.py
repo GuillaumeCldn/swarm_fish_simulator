@@ -1,0 +1,134 @@
+import sys
+sys.path.append('/home/gautier/dev/swarm/dronesim')
+sys.path.append('/home/gautier/dev/swarm/UavSwarmFish')
+
+from PyQt6.QtWidgets import QApplication
+#from PyQt6.QtCore import Qt, QTimer
+
+from swarm_controller import SwarmFish_Environment, SwamFish_View, SwarmFish_Controller, ms_of_hz, make_args_parser
+import util
+
+import numpy as np
+import math
+
+import swarmfish.swarm_control as sc
+import swarmfish.obstacles as so
+from swarmfish.utils import load_polygons_from_json
+
+TEST_OBSTACLE = True
+SHOW_INFLUENTIALS = False
+NB_INFLUENTIAL = 2
+SCENE_FILE = "scenes/test_world.json"
+
+POS_NOISE = 0.
+SPEED_NOISE = 0.1
+HEADING_NOISE = 0.
+
+class SwarmFish_Scenario(SwarmFish_Controller):
+
+    def __init__(self, ARGS, env, view, start=True):
+        super().__init__(ARGS, env, view)
+
+        #### Init SwarmFish ########################################
+        arena_radius = 10.
+        arena_center = np.array([0., 0., 0.])
+        self.arena = so.Arena(center=arena_center[0:2], radius=arena_radius, name="arena")
+
+        self.desired_course = np.zeros(self.num_drones)
+
+        # larger grid
+        self.view.grid.setSize(100,100,1)
+        self.view.grid.setSpacing(10,10,1)
+        # load obstacles from json
+        self.buildings = load_polygons_from_json(SCENE_FILE)
+        for b in self.buildings:
+            self.view.add_polygon(vertices=b.vertices, height=b.z_max-b.z_min)
+        # nav waypoints
+        self.wps = np.array([
+            [-10., 50., 5.],
+            [10, -50., 5.]
+            ])
+        self.wps_idx = 0
+        self.wps_nb = np.shape(self.wps)[0]
+
+        if SHOW_INFLUENTIALS:
+            self.lines = {}
+            for d in env.DRONE_IDS:
+                self.lines[str(d-1)] = [ self.view.add_line(np.zeros(3), np.zeros(3)) for x in range(NB_INFLUENTIAL) ]
+
+        if start:
+            self.start_simulation()
+
+
+    def update_action(self):
+        #### Step the simulation ###################################
+
+        noise = np.random.normal(size=7)
+        states = { str(j): sc.State(
+            self.obs[str(j)]["state"][0:3] + POS_NOISE*noise[0:3],
+            self.obs[str(j)]["state"][10:13] + SPEED_NOISE*noise[3:6],
+            self.obs[str(j)]["state"][9] + HEADING_NOISE*noise[6],
+            self.current_time, str(j)) for j in range(self.num_drones) }
+        #### Compute control for the current state #############
+        for uav_id in range(self.num_drones):
+            # If you need : obs[str(j)]["state"] include jth vehicle's
+            # position [0:3]  quaternion [3:7]   Attitude[7:10]  VelocityInertialFrame[10:13]     qpr[13:16]   motors[16:20]
+            #   X  Y  Z       Q1   Q2   Q3  Q4   R  P   Y        VX     VY    VZ                  WX WY WZ     P0 P1 P2 P3
+            uav_name = str(uav_id)
+            state = states[uav_name]
+            dpos = self.wps[self.wps_idx][0:2] - state.pos[0:2]
+            nav_direction = math.atan2(dpos[1], dpos[0])
+            nav_alt = self.wps[self.wps_idx][2]
+            obstacles = [ b.get_wall(state, self.params) for b in self.buildings if b is not None ]
+            if uav_id in self.intruders_id:
+                cmd, _ = sc.compute_interactions(state, self.params, [], nb_influent=0, 
+                        direction=self.direction_setpoint,
+                        altitude=self.altitude_setpoint, z_min=1., z_max=10., obstacles=obstacles)
+            else:
+                neighbors = [ states[str(k)] for k in range(self.num_drones) if (k != uav_id) and (k not in self.intruders_id)  ]
+                intruders = [ states[str(k)] for k in self.intruders_id if k != uav_id ]
+                cmd, influentials = sc.compute_interactions(state, self.params, neighbors, nb_influent=NB_INFLUENTIAL,
+                        altitude=nav_alt, z_min = 1., z_max = 10.,
+                        direction=nav_direction,
+                        intruders=intruders, obstacles=obstacles)
+                if SHOW_INFLUENTIALS:
+                    for l, influential in zip(self.lines[uav_name], influentials):
+                        self.view.move_line(l, state.pos, states[influential[1]].pos)
+            self.desired_course[uav_id] = sc.wrap_to_pi(self.desired_course[uav_id] + cmd.delta_course / self.control_freq_hz)
+            desired_course = self.desired_course[uav_id]
+            #print(f'desired course {uav_name}: {np.degrees(desired_course):0.2f} | {np.degrees(state.get_course()):0.2f} + {np.degrees(cmd.delta_course):0.2f}')
+            magnitude = self.speed_setpoint + cmd.delta_speed # TODO clip min/max
+            if uav_id in self.intruders_id:
+                magnitude *= 2.
+            speed = np.array([
+                magnitude * math.cos(desired_course),
+                magnitude * math.sin(desired_course),
+                cmd.delta_vz,
+                desired_course])
+            self.commands[uav_id] = speed
+            #self.action[uav_name] = speed # when actions are speeds directly
+
+            #print(state)
+            #print(f' cmd {uav_id} | {np.degrees(cmd.delta_course):0.2f}, {cmd.delta_speed:0.3f}, {cmd.delta_vz:0.3f} | desired_course {np.degrees(desired_course):0.2f}')
+            #print(' speed',uav_id,speed)
+        #print('') # blank line
+
+        # test waypoint reached
+        dwps = [np.linalg.norm(self.wps[self.wps_idx][0:2] - states[str(i)].pos[0:2]) for i in range(self.num_drones)]
+        if np.min(dwps) < 10.:
+            self.wps_idx = (self.wps_idx + 1) % self.wps_nb
+
+
+if __name__ == "__main__":
+
+    parser = make_args_parser()
+    args = parser.parse_args()
+    env = SwarmFish_Environment(args)
+    app = QApplication(sys.argv)
+    view = SwamFish_View()
+    controller = SwarmFish_Scenario(args, env.env, view)
+    app.exec()
+    controller.close()
+    view.close()
+    env.close()
+    sys.exit()

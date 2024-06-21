@@ -105,9 +105,9 @@ class SwamFish_View(QMainWindow):
         self.resize(1024,768)
         self.view = gl.GLViewWidget()
         self.view.setBackgroundColor(100,100,100, 255)
-        grid = gl.GLGridItem()
-        grid.setColor('k')
-        self.view.addItem(grid)
+        self.grid = gl.GLGridItem()
+        self.grid.setColor('k')
+        self.view.addItem(self.grid)
         self.setCentralWidget(self.view)
         self.show()
 

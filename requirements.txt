@@ -11,3 +11,4 @@ PyYAML
 pyqtgraph
 trimesh
 pyopengl
+multiprocess
