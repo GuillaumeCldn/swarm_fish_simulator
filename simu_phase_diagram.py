@@ -25,24 +25,13 @@ import swarmfish.swarm_control as sc
 
 def run_simulation(ARGS: dict):
     #### Initialize the simulation #############################
-    # TODO randomize init ?
-    H = 0.50
-    H_STEP = 0.05
-    R = 1.5
+    dim = math.ceil(math.sqrt(ARGS.num_drones))
+    dist = 2.
 
     AGGR_PHY_STEPS = (
         int(ARGS.simulation_freq_hz / ARGS.control_freq_hz) if ARGS.aggregate else 1
     )
-    INIT_XYZS = np.array(
-        [
-            [
-                R * np.cos((i / 6) * 2 * np.pi + np.pi / 2),
-                R * np.sin((i / 6) * 2 * np.pi + np.pi / 2),
-                H + i * H_STEP,
-            ]
-            for i in range(ARGS.num_drones)
-        ]
-    )
+    INIT_XYZS = np.array([[ dist*(i % dim), dist*math.floor(i / dim), 0. ] for i in range(ARGS.num_drones)]) 
     if ARGS.random_init:
         INIT_YAW = 2.*np.pi*np.random.rand(ARGS.num_drones)
     else:
@@ -80,11 +69,15 @@ def run_simulation(ARGS: dict):
     action = {str(i): np.zeros(4) for i in range(ARGS.num_drones)}
     CTRL_EVERY_N_STEPS = int(np.floor(env.SIM_FREQ / ARGS.control_freq_hz))
     desired_course = INIT_YAW
-    speed_setpoint = 1. # TODO make this configurable
+    speed_setpoint = ARGS.speed_setpoint
     obs, _, _, _ = env.step(action) # initial observation
 
     #### Init SwarmFish ########################################
     params = load_params_from_yaml(ARGS.swarm_config)
+    if ARGS.y_ali is not None:
+        params.y_ali = ARGS.y_ali
+    if ARGS.y_att is not None:
+        params.y_att = ARGS.y_att
 
     #### Run the simulation ####################################
     START = time.time()
@@ -152,12 +145,13 @@ def run_simulation(ARGS: dict):
     env.close()
 
     #### Save the simulation results ###########################
-    print('log files')
-    logger.save(file_path='logs/')
+    logger.save(file_path=ARGS.log_file_path, file_name=ARGS.log_name)
 
     #### Plot the simulation results ###########################
     # if ARGS.plot:
     # logger.plot()
+
+    return f'{ARGS.log_file_path}{ARGS.log_name} done'
 
 if __name__ == "__main__":
     #### Define and parse (optional) arguments for the script ##
@@ -178,6 +172,13 @@ if __name__ == "__main__":
         default=5,
         type=int,
         help="Number of drones",
+        metavar="",
+    )
+    parser.add_argument(
+        "--speed_setpoint",
+        default=1.,
+        type=float,
+        help="speed setpoint",
         metavar="",
     )
     parser.add_argument(
@@ -231,6 +232,20 @@ if __name__ == "__main__":
         metavar="",
     )
     parser.add_argument(
+        "--log_name",
+        default=None,
+        type=str,
+        help="Log file name",
+        metavar="",
+    )
+    parser.add_argument(
+        "--log_file_path",
+        default='logs/',
+        type=str,
+        help="Log file path",
+        metavar="",
+    )
+    parser.add_argument(
         "--duration_sec",
         default=20,
         type=int,
@@ -249,6 +264,20 @@ if __name__ == "__main__":
         default=True,
         type=str2bool,
         help="Randomize init (heading only)",
+        metavar="",
+    )
+    parser.add_argument(
+        "--y_att",
+        default=0.5,
+        type=float,
+        help="attraction coefficient",
+        metavar="",
+    )
+    parser.add_argument(
+        "--y_ali",
+        default=0.5,
+        type=float,
+        help="aligment coefficient",
         metavar="",
     )
     ARGS = parser.parse_args()

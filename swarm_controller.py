@@ -55,23 +55,13 @@ class SwarmFish_Environment():
     def create(self):
 
         #### Initialize the simulation #############################
-        H = 0.50
-        H_STEP = 0.05
-        R = 1.5
+        dim = math.ceil(math.sqrt(self.num_drones))
+        dist = 2.
 
         AGGR_PHY_STEPS = (
             int(self.simulation_freq_hz / self.control_freq_hz) if self.aggregate else 1
         )
-        INIT_XYZS = np.array(
-            [
-                [
-                    R * np.cos((i / 6) * 2 * np.pi + np.pi / 2),
-                    R * np.sin((i / 6) * 2 * np.pi + np.pi / 2),
-                    H + i * H_STEP,
-                ]
-                for i in range(self.num_drones)
-            ]
-        )
+        INIT_XYZS = np.array([[ dist*(i % dim), dist*math.floor(i / dim), 0. ] for i in range(self.num_drones)]) 
         INIT_RPYS = np.array([[0.0, 0.0, 0.0] for i in range(self.num_drones)])
 
         #### Create the environment
