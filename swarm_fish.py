@@ -33,7 +33,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         arena_center = np.array([0., 0., 0.])
         self.arena = so.Arena(center=arena_center[0:2], radius=arena_radius, name="arena")
         if SHOW_ARENA:
-            self.view.add_cylinder(radius=arena_radius, height=0.1, pos=arena_center, color=(0,1,0,1))
+            self.view.add_cylinder(radius=arena_radius, height=0.01, pos=arena_center, color=(0,1,0,1))
 
         self.desired_course = np.zeros(self.num_drones)
 
