@@ -5,22 +5,23 @@ import numpy as np
 import json
 
 #N = 3
+pool_size = 20
 num_drones = 5
-duration = 10
-samples = 2
+duration = 200
+samples = 10
 speed = 1.
-log_file_path = 'logs/'
+log_file_path = 'test_phase/'
 
 
-p = Pool(3)
+p = Pool(pool_size)
 
 config = {
         'num_drones': num_drones,
         'duration': duration,
         'samples': samples,
         'speed': speed,
-        'y_att': [0., 1.0, 0.1],
-        'y_ali': [0., 0.4, 0.1]
+        'y_att': [0., 1.0, 0.05],
+        'y_ali': [0., 0.4, 0.05]
         }
 
 with open(f'{log_file_path}config.json', 'w') as f:
@@ -29,7 +30,7 @@ with open(f'{log_file_path}config.json', 'w') as f:
 def run_cmd(param: dict):
     cmd = ['python', 'simu_phase_diagram.py',
             '--swarm_config=../UavSwarmFish/config/demo.yaml',
-            f'--num_drones={num_drones}', '--duration_sec=10',
+            f'--num_drones={num_drones}', f'--duration_sec={duration}',
             f'--log_name={param["name"]}',
             f'--log_file_path={log_file_path}',
             f'--y_att={param["y_att"]}',

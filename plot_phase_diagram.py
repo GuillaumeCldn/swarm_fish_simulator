@@ -28,23 +28,26 @@ y_alis = np.arange(config['y_ali'][0], config['y_ali'][1], config['y_ali'][2])
 samples = config['samples']
 
 # array to store quantification (6 values)
-data = np.zeros((y_atts.shape[0], y_alis.shape[0], samples, 6))
+data = np.full((y_atts.shape[0], y_alis.shape[0], samples, 6), np.nan)
 
 for i, y_att in enumerate(y_atts):
     for j, y_ali in enumerate(y_alis):
         for k in range(samples):
             file_name = path.join(args.log_path, f'run__{i}_{j}_{k}.npy')
-            quant = compute_quantification_from_log(file_name)
-            data[i,j,k,:] = quant
+            try:
+                quant = compute_quantification_from_log(file_name)
+                data[i,j,k,:] = quant
+            except Exception as e:
+                pass
 
 fig, axs = plt.subplots(2, 3)
 x,y = np.meshgrid(y_atts, y_alis)
-dispersion      = np.mean(data[:,:,:,0], axis=2)
-polarization    = np.mean(data[:,:,:,1], axis=2)
-milling         = np.mean(data[:,:,:,2], axis=2)
-fluct_disp      = np.mean(data[:,:,:,3], axis=2)
-fluct_pol       = np.mean(data[:,:,:,4], axis=2)
-fluct_mil       = np.mean(data[:,:,:,5], axis=2)
+dispersion      = np.nanmean(data[:,:,:,0], axis=2)
+polarization    = np.nanmean(data[:,:,:,1], axis=2)
+milling         = np.nanmean(data[:,:,:,2], axis=2)
+fluct_disp      = np.nanmean(data[:,:,:,3], axis=2)
+fluct_pol       = np.nanmean(data[:,:,:,4], axis=2)
+fluct_mil       = np.nanmean(data[:,:,:,5], axis=2)
 axs[0, 0].pcolormesh(x, y, np.transpose(dispersion))
 axs[0, 0].set_title('dispersion')
 axs[0, 1].pcolormesh(x, y, np.transpose(polarization))
