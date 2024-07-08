@@ -31,7 +31,7 @@ def ms_of_hz(freq):
     return int(1000 / freq)
 
 SIMULATION_FREQ = 100 # in Hz
-CONTROL_FREQ = 100  # in HZ
+CONTROL_FREQ = 10  # in HZ
 NB_OF_DRONES = 5
 
 
@@ -73,7 +73,7 @@ class SwarmFish_Environment():
             physics=Physics.PYB,
             neighbourhood_radius=10,
             freq=self.simulation_freq_hz,
-            aggregate_phy_steps=AGGR_PHY_STEPS,
+            aggregate_phy_steps=1,#AGGR_PHY_STEPS,
             gui=self.gui,
             record=self.record_video,
             obstacles=self.obstacles,
@@ -169,8 +169,12 @@ class SwamFish_View(QMainWindow):
         self.view.addItem(line)
         return line
 
-    def move_line(self, line, pos1, pos2, color=(255, 255, 255, 255)):
-        line.setData(pos=np.vstack((pos1, pos2)), color=color)
+    def move_line(self, line, pos1, pos2, color=None):
+        if color is None:
+            line.setData(pos=np.vstack((pos1, pos2)))
+        else:
+            line.setData(pos=np.vstack((pos1, pos2)), color=color)
+
 
 
 class SwarmFish_Controller(QWidget, Ui_SwarmController):

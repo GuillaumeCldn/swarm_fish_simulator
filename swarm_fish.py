@@ -14,13 +14,14 @@ import math
 import swarmfish.swarm_control as sc
 import swarmfish.obstacles as so
 
-TEST_OBSTACLE = True
+TEST_OBSTACLE = False
+SHOW_DIRECTION = True
 SHOW_ARENA = True
 SHOW_INFLUENTIALS = False
-NB_INFLUENTIAL = 2
+NB_INFLUENTIAL = 1
 
 POS_NOISE = 0.
-SPEED_NOISE = 0.1
+SPEED_NOISE = 0. #0.1
 HEADING_NOISE = 0.
 
 class SwarmFish_Scenario(SwarmFish_Controller):
@@ -54,6 +55,13 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             self.lines = {}
             for d in env.DRONE_IDS:
                 self.lines[str(d-1)] = [ self.view.add_line(np.zeros(3), np.zeros(3)) for x in range(NB_INFLUENTIAL) ]
+
+        if SHOW_DIRECTION:
+            self.directions = {}
+            self.speeds = {}
+            for d in env.DRONE_IDS:
+                self.directions[str(d-1)] = [ self.view.add_line(np.zeros(3), np.zeros(3), color=(1.,0.,0.,1.)) ]
+                self.speeds[str(d-1)] = [ self.view.add_line(np.zeros(3), np.zeros(3), color=(0.,0.,1.,1.)) ]
 
         if start:
             self.start_simulation()
@@ -116,6 +124,11 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                 desired_course])
             self.commands[uav_id] = speed
             #self.action[uav_name] = speed # when actions are speeds directly
+
+            if SHOW_DIRECTION:
+                for d, s in zip(self.directions[uav_name], self.speeds[uav_name]):
+                    self.view.move_line(d, state.pos, state.pos+speed[0:3])
+                    self.view.move_line(s, state.pos, state.pos+state.speed)
 
             #print(state)
             #print(f' wall {uav_id} | dist {wall[0]:.2f}, angle= {np.degrees(wall[1]):.2f}')
