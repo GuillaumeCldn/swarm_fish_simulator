@@ -18,7 +18,7 @@ TEST_OBSTACLE = False
 SHOW_DIRECTION = True
 SHOW_ARENA = True
 SHOW_INFLUENTIALS = False
-NB_INFLUENTIAL = 1
+NB_INFLUENTIAL = 2
 
 POS_NOISE = 0.
 SPEED_NOISE = 0. #0.1
@@ -36,7 +36,8 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         if SHOW_ARENA:
             self.view.add_cylinder(radius=arena_radius, height=0.01, pos=arena_center, color=(0,1,0,1))
 
-        self.desired_course = np.zeros(self.num_drones)
+        init_yaw = [ self.obs[str(j)]["state"][9] for j in range(self.num_drones) ]
+        self.desired_course = np.array(init_yaw) # np.zeros(self.num_drones)
 
         if TEST_OBSTACLE:
             obstacle_radius = 0.5
@@ -83,20 +84,10 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             #   X  Y  Z       Q1   Q2   Q3  Q4   R  P   Y        VX     VY    VZ                  WX WY WZ     P0 P1 P2 P3
             uav_name = str(uav_id)
             state = states[uav_name]
-            wall = self.arena.get_wall(state, self.params)
+            wall = None # self.arena.get_wall(state, self.params)
             obstacles = []
             if TEST_OBSTACLE:
                 obstacles = [ o.get_wall(state, self.params) for o in [self.obstacle, self.polygon] if o is not None ]
-                #dist = wall[0]
-                #for obs in [self.obstacle, self.polygon]:
-                #    w = obs.get_wall(state, self.params)
-                #    if w is not None and w[0] < dist:
-                #        dist = w[0]
-                #        wall = w
-                #        print(f'Uav {uav_name} - {dist:.2f} -> {obs} | {w[0]:.2f} {np.degrees(w[1]):.2f}')
-                #if obstacle is not None and obstacle[0] < 2*self.params.l_w and obstacle[0] < wall[0]:
-                #    wall = obstacle
-                #    #print('Obstacle', uav_name, obstacle)
             if uav_id in self.intruders_id:
                 cmd, _ = sc.compute_interactions(state, self.params, [], nb_influent=0,
                         wall=wall, altitude=5., z_min=1., z_max=10., obstacles=obstacles)
@@ -112,7 +103,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                         self.view.move_line(l, state.pos, states[influential[1]].pos)
             #desired_course = sc.wrap_to_pi(state.get_course() + cmd.delta_course)
             self.desired_course[uav_id] = sc.wrap_to_pi(self.desired_course[uav_id] + cmd.delta_course / self.control_freq_hz)
-            desired_course = self.desired_course[uav_id]
+            desired_course = self.desired_course[uav_id] + 0.1*np.random.rand()
             #print(f'desired course {uav_name}: {np.degrees(desired_course):0.2f} | {np.degrees(state.get_course()):0.2f} + {np.degrees(cmd.delta_course):0.2f}')
             magnitude = self.speed_setpoint + cmd.delta_speed # TODO clip min/max
             if uav_id in self.intruders_id:
@@ -123,7 +114,6 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                 cmd.delta_vz,
                 desired_course])
             self.commands[uav_id] = speed
-            #self.action[uav_name] = speed # when actions are speeds directly
 
             if SHOW_DIRECTION:
                 for d, s in zip(self.directions[uav_name], self.speeds[uav_name]):

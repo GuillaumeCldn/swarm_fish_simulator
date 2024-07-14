@@ -48,6 +48,7 @@ class SwarmFish_Environment():
         self.record_video = ARGS.record_video
         self.obstacles = ARGS.obstacles
         self.user_debug_gui = ARGS.user_debug_gui
+        self.random_init = ARGS.random_init
 
         if create_env:
             self.create()
@@ -62,7 +63,12 @@ class SwarmFish_Environment():
             int(self.simulation_freq_hz / self.control_freq_hz) if self.aggregate else 1
         )
         INIT_XYZS = np.array([[ dist*(i % dim), dist*math.floor(i / dim), 0. ] for i in range(self.num_drones)]) 
-        INIT_RPYS = np.array([[0.0, 0.0, 0.0] for i in range(self.num_drones)])
+        #INIT_RPYS = np.array([[0.0, 0.0, 0.0] for i in range(self.num_drones)])
+        if self.random_init:
+            INIT_YAW = 2.*np.pi*np.random.rand(self.num_drones)
+        else:
+            INIT_YAW = np.zeros(self.num_drones)
+        INIT_RPYS = np.array([[0.0, 0.0, INIT_YAW[i]] for i in range(self.num_drones)])
 
         #### Create the environment
         self.env = CtrlAviary(
@@ -420,6 +426,13 @@ def make_args_parser():
         default='config/demo.yaml',
         type=str,
         help="SwarmFish parameter file",
+        metavar="",
+    )
+    parser.add_argument(
+        "--random_init",
+        default=False,
+        type=str2bool,
+        help="Randomize init (heading only)",
         metavar="",
     )
     return parser
