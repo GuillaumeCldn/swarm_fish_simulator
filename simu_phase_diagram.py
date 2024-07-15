@@ -1,6 +1,7 @@
 """Script for testing swarmfish with quadrotors following a desired velocity vector (unit vector + magnitude normalized by max vehicle speed in Km/h)
 """
 import sys
+import os
 sys.path.append('/home/gautier/dev/swarm/dronesim')
 sys.path.append('/home/gautier/dev/swarm/UavSwarmFish')
 
@@ -19,7 +20,7 @@ from dronesim.envs.CtrlAviary import CtrlAviary
 from dronesim.utils.Logger import Logger
 from dronesim.utils.utils import str2bool, sync
 
-from swarmfish.utils import load_params_from_yaml
+from swarmfish.utils import load_params_from_yaml, compute_quantification
 import swarmfish.swarm_control as sc
 
 
@@ -145,7 +146,13 @@ def run_simulation(ARGS: dict):
     env.close()
 
     #### Save the simulation results ###########################
-    logger.save(file_path=ARGS.log_file_path, file_name=ARGS.log_name)
+    if ARGS.save_quant:
+        quant = compute_quantification(logger.states, int(logger.state_length * 0.6))
+        file_name = os.path.join(ARGS.log_file_path, 'quant_'+ARGS.log_name)
+        #np.savez(file_name, quant=quant)
+        np.savetxt(file_name, quant.reshape((1,6)))
+    else:
+        logger.save(file_path=ARGS.log_file_path, file_name=ARGS.log_name)
 
     #### Plot the simulation results ###########################
     # if ARGS.plot:
@@ -278,6 +285,13 @@ if __name__ == "__main__":
         default=0.5,
         type=float,
         help="aligment coefficient",
+        metavar="",
+    )
+    parser.add_argument(
+        "--save_quant",
+        default=False,
+        type=str2bool,
+        help="Save quantification instead of full log",
         metavar="",
     )
     ARGS = parser.parse_args()
