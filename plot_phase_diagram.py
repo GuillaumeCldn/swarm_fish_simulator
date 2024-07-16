@@ -17,6 +17,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument("log_path", type=str, help="log files path")
 parser.add_argument("--config", type=str, default="config.json", help="json config file")
 parser.add_argument("--plot", action=argparse.BooleanOptionalAction, default=True, help="display result in a plot")
+parser.add_argument("--quant", action=argparse.BooleanOptionalAction, default=False, help="load from quantification logs")
 parser.add_argument("--save", type=str, default=None, help="save in file")
 parser.add_argument("--load", type=str, default=None, help="load data from file")
 
@@ -37,12 +38,20 @@ if args.load is None:
     for i, y_att in enumerate(y_atts):
         for j, y_ali in enumerate(y_alis):
             for k in range(samples):
-                file_name = path.join(args.log_path, f'run__{i}_{j}_{k}.npy')
-                try:
-                    quant = compute_quantification_from_log(file_name)
-                    data[i,j,k,:] = quant
-                except Exception as e:
-                    pass
+                if args.quant:
+                    file_name = path.join(args.log_path, f'quant_run__{i}_{j}_{k}.txt')
+                    try:
+                        quant = np.loadtxt(file_name)
+                        data[i,j,k,:] = quant
+                    except Exception as e:
+                        print(e)
+                else:
+                    file_name = path.join(args.log_path, f'run__{i}_{j}_{k}.npy')
+                    try:
+                        quant = compute_quantification_from_log(file_name, skip_ratio=0.1)
+                        data[i,j,k,:] = quant
+                    except Exception as e:
+                        pass
 
     dispersion      = np.nanmean(data[:,:,:,0], axis=2)
     polarization    = np.nanmean(data[:,:,:,1], axis=2)
@@ -72,17 +81,17 @@ if args.save is not None:
 if args.plot:
     fig, axs = plt.subplots(2, 3)
     x,y = np.meshgrid(y_atts, y_alis)
-    axs[0, 0].pcolormesh(x, y, np.transpose(dispersion))
+    p00 = axs[0, 0].pcolormesh(x, y, np.transpose(dispersion))
     axs[0, 0].set_title('dispersion')
-    axs[0, 1].pcolormesh(x, y, np.transpose(polarization))
+    p01 = axs[0, 1].pcolormesh(x, y, np.transpose(polarization))
     axs[0, 1].set_title('polarization')
-    axs[0, 2].pcolormesh(x, y, np.transpose(milling))
+    p02 = axs[0, 2].pcolormesh(x, y, np.transpose(milling))
     axs[0, 2].set_title('milling')
-    axs[1, 0].pcolormesh(x, y, np.transpose(fluct_disp))
+    p10 = axs[1, 0].pcolormesh(x, y, np.transpose(fluct_disp))
     axs[1, 0].set_title('fluctuation of dispersion')
-    axs[1, 1].pcolormesh(x, y, np.transpose(fluct_pol))
+    p11 = axs[1, 1].pcolormesh(x, y, np.transpose(fluct_pol))
     axs[1, 1].set_title('fluctuation of polarization')
-    axs[1, 2].pcolormesh(x, y, np.transpose(fluct_mil))
+    p12 = axs[1, 2].pcolormesh(x, y, np.transpose(fluct_mil))
     axs[1, 2].set_title('fluctuation of milling')
 
     axs[0, 0].set_ylabel(r'$\gamma_{ali}$')
@@ -90,4 +99,11 @@ if args.plot:
     axs[1, 0].set_xlabel(r'$\gamma_{att}$')
     axs[1, 1].set_xlabel(r'$\gamma_{att}$')
     axs[1, 2].set_xlabel(r'$\gamma_{att}$')
+
+    fig.colorbar(p00, ax=axs[0,0], pad=0)
+    fig.colorbar(p01, ax=axs[0,1], pad=0)
+    fig.colorbar(p02, ax=axs[0,2], pad=0)
+    fig.colorbar(p10, ax=axs[1,0], pad=0)
+    fig.colorbar(p11, ax=axs[1,1], pad=0)
+    fig.colorbar(p12, ax=axs[1,2], pad=0)
     plt.show()

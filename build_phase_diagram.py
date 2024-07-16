@@ -1,4 +1,5 @@
 import sys
+import os
 from multiprocess import Pool
 import subprocess
 import numpy as np
@@ -24,7 +25,8 @@ config = {
         'y_ali': [0., 0.4, 0.05]
         }
 
-with open(f'{log_file_path}config.json', 'w') as f:
+config_file = os.path.join(log_file_path, 'config.json')
+with open(config_file, 'w') as f:
     json.dump(config, f)
 
 def run_cmd(param: dict):
