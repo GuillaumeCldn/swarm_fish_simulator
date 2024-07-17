@@ -112,9 +112,9 @@ def run_simulation(ARGS: dict):
                 neighbors = [ states[str(k)] for k in range(ARGS.num_drones) if k != uav_id ]
                 cmd, influentials = sc.compute_interactions(state, params,
                         neighbors,
-                        nb_influent=1,
+                        nb_influent=2,
                         wall=None,
-                        altitude=5., z_min = 1., z_max = 10.,
+                        altitude=None, z_min = 5., z_max = 10.,
                         direction=None)
                 desired_course[uav_id] = sc.wrap_to_pi(desired_course[uav_id] + cmd.delta_course / ARGS.control_freq_hz)
                 magnitude = speed_setpoint + cmd.delta_speed # TODO clip min/max
@@ -163,136 +163,29 @@ if __name__ == "__main__":
         description="Phase diagram simulation",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument(
-        "--drone",
-        default=["robobee"],
-        type=list,
-        help="Drone model",
-        metavar="",
-        choices=[DroneModel],
-    )
-    parser.add_argument(
-        "--num_drones",
-        default=5,
-        type=int,
-        help="Number of drones",
-        metavar="",
-    )
-    parser.add_argument(
-        "--speed_setpoint",
-        default=1.,
-        type=float,
-        help="speed setpoint",
-        metavar="",
-    )
-    parser.add_argument(
-        "--physics",
-        default="pyb",
-        type=Physics,
-        help="Physics updates",
-        metavar="",
-        choices=Physics,
-    )
-    parser.add_argument(
-        "--gui",
-        default=False,
-        type=str2bool,
-        help="Whether to use PyBullet GUI",
-        metavar="",
-    )
-    parser.add_argument(
-        "--plot",
-        default=True,
-        type=str2bool,
-        help="Whether to plot the simulation results",
-        metavar="",
-    )
-    parser.add_argument(
-        "--aggregate",
-        default=True,
-        type=str2bool,
-        help="Whether to aggregate physics steps",
-        metavar="",
-    )
-    parser.add_argument(
-        "--simulation_freq_hz",
-        default=100,
-        type=int,
-        help="Simulation frequency in Hz",
-        metavar="",
-    )
-    parser.add_argument(
-        "--control_freq_hz",
-        default=100,
-        type=int,
-        help="Control frequency in Hz",
-        metavar="",
-    )
-    parser.add_argument(
-        "--log_freq_hz",
-        default=10,
-        type=int,
-        help="Log frequency in Hz",
-        metavar="",
-    )
-    parser.add_argument(
-        "--log_name",
-        default=None,
-        type=str,
-        help="Log file name",
-        metavar="",
-    )
-    parser.add_argument(
-        "--log_file_path",
-        default='logs/',
-        type=str,
-        help="Log file path",
-        metavar="",
-    )
-    parser.add_argument(
-        "--duration_sec",
-        default=20,
-        type=int,
-        help="Duration of the simulation in seconds",
-        metavar="",
-    )
-    parser.add_argument(
-        "--swarm_config",
-        default='config/demo.yaml',
-        type=str,
-        help="SwarmFish parameter file",
-        metavar="",
-    )
-    parser.add_argument(
-        "--random_init",
-        default=True,
-        type=str2bool,
-        help="Randomize init (heading only)",
-        metavar="",
-    )
-    parser.add_argument(
-        "--y_att",
-        default=0.5,
-        type=float,
-        help="attraction coefficient",
-        metavar="",
-    )
-    parser.add_argument(
-        "--y_ali",
-        default=0.5,
-        type=float,
-        help="aligment coefficient",
-        metavar="",
-    )
-    parser.add_argument(
-        "--save_quant",
-        default=False,
-        type=str2bool,
-        help="Save quantification instead of full log",
-        metavar="",
-    )
+    parser.add_argument("--drone", default=["robobee"], type=list, help="Drone model", metavar="", choices=[DroneModel])
+    parser.add_argument("--num_drones", default=5, type=int, help="Number of drones", metavar="")
+    parser.add_argument("--speed_setpoint", default=1., type=float, help="speed setpoint", metavar="")
+    parser.add_argument("--physics", default="pyb", type=Physics, help="Physics updates", metavar="", choices=Physics)
+    parser.add_argument("--gui", default=False, type=str2bool, help="Whether to use PyBullet GUI", metavar="")
+    parser.add_argument("--plot", default=True, type=str2bool, help="Whether to plot the simulation results", metavar="")
+    parser.add_argument("--aggregate", default=True, type=str2bool, help="Whether to aggregate physics steps", metavar="")
+    parser.add_argument("--simulation_freq_hz", default=100, type=int, help="Simulation frequency in Hz", metavar="")
+    parser.add_argument("--control_freq_hz", default=100, type=int, help="Control frequency in Hz", metavar="")
+    parser.add_argument("--log_freq_hz", default=10, type=int, help="Log frequency in Hz", metavar="")
+    parser.add_argument("--log_name", default=None, type=str, help="Log file name", metavar="")
+    parser.add_argument("--log_file_path", default='logs/', type=str, help="Log file path", metavar="")
+    parser.add_argument("--duration_sec", default=20, type=int, help="Duration of the simulation in seconds", metavar="")
+    parser.add_argument("--swarm_config", default='config/demo.yaml', type=str, help="SwarmFish parameter file", metavar="")
+    parser.add_argument("--random_init",  default=True, type=str2bool, help="Randomize init (heading only)", metavar="")
+    parser.add_argument("--y_att", default=0.5, type=float, help="attraction coefficient", metavar="")
+    parser.add_argument("--y_ali", default=0.5, type=float, help="aligment coefficient", metavar="")
+    parser.add_argument("--save_quant", default=False, type=str2bool, help="Save quantification instead of full log", metavar="")
     ARGS = parser.parse_args()
 
-    run_simulation(ARGS)
+    try:
+        run_simulation(ARGS)
+    except (KeyboardInterrupt, SystemExit):
+        print("Simu phase diagram stopped")
 
 # EOF
