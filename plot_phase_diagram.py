@@ -23,15 +23,15 @@ parser.add_argument("--load", type=str, default=None, help="load data from file"
 
 args = parser.parse_args()
 
-f = open(path.join(args.log_path, args.config), 'r')
-config = json.load(f)
-f.close()
-
-y_atts = np.arange(config['y_att'][0], config['y_att'][1], config['y_att'][2])
-y_alis = np.arange(config['y_ali'][0], config['y_ali'][1], config['y_ali'][2])
-samples = config['samples']
-
 if args.load is None:
+    f = open(path.join(args.log_path, args.config), 'r')
+    config = json.load(f)
+    f.close()
+
+    y_atts = np.arange(config['y_att'][0], config['y_att'][1], config['y_att'][2])
+    y_alis = np.arange(config['y_ali'][0], config['y_ali'][1], config['y_ali'][2])
+    samples = config['samples']
+
     # array to store quantification (6 values)
     data = np.full((y_atts.shape[0], y_alis.shape[0], samples, 6), np.nan)
 
@@ -62,6 +62,7 @@ if args.load is None:
 
 else:
     data = np.load(args.load)
+    config = data['config']
     dispersion = data['dispersion']
     polarization = data['polarization']
     milling = data['milling']
@@ -69,8 +70,13 @@ else:
     fluct_pol = data['fluct_pol']
     fluct_mil = data['fluct_mil']
 
+    y_atts = np.arange(config['y_att'][0], config['y_att'][1], config['y_att'][2])
+    y_alis = np.arange(config['y_ali'][0], config['y_ali'][1], config['y_ali'][2])
+    samples = config['samples']
+
 if args.save is not None:
     np.savez(args.save,
+            config=config,
             dispersion=dispersion,
             polarization=polarization,
             milling=milling,
