@@ -36,6 +36,8 @@ def run_simulation(ARGS: dict):
         INIT_YAW = np.zeros(ARGS.num_drones)
     INIT_RPYS = np.array([[0.0, 0.0, INIT_YAW[i]] for i in range(ARGS.num_drones)])
 
+    NOISES = [ np.radians(0.2), 0.01, 0.05 ] # noise on heading, speed and vertical speed (standard deviation of a normal distribution)
+
     #### Create the environment
     env = CtrlAviary(
         drone_model=ARGS.num_drones * ARGS.drone,
@@ -114,14 +116,16 @@ def run_simulation(ARGS: dict):
                         neighbors,
                         nb_influent=2,
                         wall=None,
-                        altitude=None, z_min = 5., z_max = 10.,
+                        altitude=None, z_min = 4., z_max = 8.,
                         direction=None)
-                desired_course[uav_id] = sc.wrap_to_pi(desired_course[uav_id] + cmd.delta_course / ARGS.control_freq_hz)
-                magnitude = speed_setpoint + cmd.delta_speed # TODO clip min/max
+                noise = np.random.normal(0., NOISES)
+                desired_course[uav_id] = sc.wrap_to_pi(desired_course[uav_id] + cmd.delta_course / ARGS.control_freq_hz) + noise[0]
+                velocity = speed_setpoint + cmd.delta_speed + noise[1] # TODO clip min/max
+                vz = cmd.delta_vz + noise[2]
                 speed = np.array([
-                    magnitude * math.cos(desired_course[uav_id]),
-                    magnitude * math.sin(desired_course[uav_id]),
-                    cmd.delta_vz,
+                    velocity * math.cos(desired_course[uav_id]),
+                    velocity * math.sin(desired_course[uav_id]),
+                    vz,
                     desired_course[uav_id]])
                 commands[uav_id] = speed
 

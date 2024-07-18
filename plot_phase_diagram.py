@@ -61,8 +61,8 @@ if args.load is None:
     fluct_mil       = np.nanmean(data[:,:,:,5], axis=2)
 
 else:
-    data = np.load(args.load)
-    config = data['config']
+    data = np.load(args.load, allow_pickle=True)
+    config = data['config'][()]
     dispersion = data['dispersion']
     polarization = data['polarization']
     milling = data['milling']
