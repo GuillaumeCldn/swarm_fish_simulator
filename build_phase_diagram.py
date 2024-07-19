@@ -55,8 +55,8 @@ def run_cmd(param: dict):
     subprocess.run(cmd)
     print(f'Done [{param["count"]}] in [{datetime.datetime.now()-start_sim}]: {" ".join(cmd)}')
 
-y_atts = np.arange(config['y_att'][0], config['y_att'][1], config['y_att'][2])
-y_alis = np.arange(config['y_ali'][0], config['y_ali'][1], config['y_ali'][2])
+y_atts = np.arange(config['y_att'][0], config['y_att'][1] + config['y_att'][2], config['y_att'][2])
+y_alis = np.arange(config['y_ali'][0], config['y_ali'][1] + config['y_ali'][2], config['y_ali'][2])
 
 nb_run = len(y_atts)*len(y_alis)*args.samples
 idx = 0

@@ -7,6 +7,7 @@ import argparse
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 
 from swarmfish.utils import compute_quantification_from_log
 
@@ -28,8 +29,8 @@ if args.load is None:
     config = json.load(f)
     f.close()
 
-    y_atts = np.arange(config['y_att'][0], config['y_att'][1], config['y_att'][2])
-    y_alis = np.arange(config['y_ali'][0], config['y_ali'][1], config['y_ali'][2])
+    y_atts = np.arange(config['y_att'][0], config['y_att'][1] + config['y_att'][2], config['y_att'][2])
+    y_alis = np.arange(config['y_ali'][0], config['y_ali'][1] + config['y_ali'][2], config['y_ali'][2])
     samples = config['samples']
 
     # array to store quantification (6 values)
@@ -70,8 +71,8 @@ else:
     fluct_pol = data['fluct_pol']
     fluct_mil = data['fluct_mil']
 
-    y_atts = np.arange(config['y_att'][0], config['y_att'][1], config['y_att'][2])
-    y_alis = np.arange(config['y_ali'][0], config['y_ali'][1], config['y_ali'][2])
+    y_atts = np.arange(config['y_att'][0], config['y_att'][1] + config['y_att'][2], config['y_att'][2])
+    y_alis = np.arange(config['y_ali'][0], config['y_ali'][1] + config['y_ali'][2], config['y_ali'][2])
     samples = config['samples']
 
 if args.save is not None:
@@ -85,19 +86,23 @@ if args.save is not None:
             fluct_mil=fluct_mil)
 
 if args.plot:
+    cmap_disp = plt.colormaps['Greens']
+    cmap_pol = plt.colormaps['Reds']
+    cmap_mil = plt.colormaps['Blues']
     fig, axs = plt.subplots(2, 3)
+    fig.suptitle(f"Phase diagram: {config['num_drones']} UAVs, {config['duration']} s, {config['samples']} samples, {config['speed']} m/s")
     x,y = np.meshgrid(y_atts, y_alis)
-    p00 = axs[0, 0].pcolormesh(x, y, np.transpose(dispersion))
+    p00 = axs[0, 0].pcolormesh(x, y, np.transpose(dispersion), cmap=cmap_disp) #, norm=colors.LogNorm(vmin=dispersion.min(), vmax=dispersion.max()))
     axs[0, 0].set_title('dispersion')
-    p01 = axs[0, 1].pcolormesh(x, y, np.transpose(polarization))
+    p01 = axs[0, 1].pcolormesh(x, y, np.transpose(polarization), cmap=cmap_pol, vmin=0., vmax=1.)
     axs[0, 1].set_title('polarization')
-    p02 = axs[0, 2].pcolormesh(x, y, np.transpose(milling))
+    p02 = axs[0, 2].pcolormesh(x, y, np.transpose(milling), cmap=cmap_mil, vmin=0., vmax=1.)
     axs[0, 2].set_title('milling')
-    p10 = axs[1, 0].pcolormesh(x, y, np.transpose(fluct_disp))
+    p10 = axs[1, 0].pcolormesh(x, y, np.transpose(fluct_disp), cmap=cmap_disp) #, norm=colors.LogNorm(vmin=dispersion.min(), vmax=dispersion.max()))
     axs[1, 0].set_title('fluctuation of dispersion')
-    p11 = axs[1, 1].pcolormesh(x, y, np.transpose(fluct_pol))
+    p11 = axs[1, 1].pcolormesh(x, y, np.transpose(fluct_pol), cmap=cmap_pol)
     axs[1, 1].set_title('fluctuation of polarization')
-    p12 = axs[1, 2].pcolormesh(x, y, np.transpose(fluct_mil))
+    p12 = axs[1, 2].pcolormesh(x, y, np.transpose(fluct_mil), cmap=cmap_mil)
     axs[1, 2].set_title('fluctuation of milling')
 
     axs[0, 0].set_ylabel(r'$\gamma_{ali}$')
@@ -106,10 +111,15 @@ if args.plot:
     axs[1, 1].set_xlabel(r'$\gamma_{att}$')
     axs[1, 2].set_xlabel(r'$\gamma_{att}$')
 
+    for ax in axs.reshape(-1):
+        ax.set_xlim(config['y_att'][0], config['y_att'][1])
+        ax.set_ylim(config['y_ali'][0], config['y_ali'][1])
+
     fig.colorbar(p00, ax=axs[0,0], pad=0)
     fig.colorbar(p01, ax=axs[0,1], pad=0)
     fig.colorbar(p02, ax=axs[0,2], pad=0)
     fig.colorbar(p10, ax=axs[1,0], pad=0)
     fig.colorbar(p11, ax=axs[1,1], pad=0)
     fig.colorbar(p12, ax=axs[1,2], pad=0)
+    fig.tight_layout()
     plt.show()
