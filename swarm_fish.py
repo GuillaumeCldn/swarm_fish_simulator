@@ -1,9 +1,6 @@
 import sys
-sys.path.append('/home/gautier/dev/swarm/dronesim')
-sys.path.append('/home/gautier/dev/swarm/UavSwarmFish')
 
 from PyQt6.QtWidgets import QApplication
-#from PyQt6.QtCore import Qt, QTimer
 
 from swarm_controller import SwarmFish_Environment, SwamFish_View, SwarmFish_Controller, ms_of_hz, make_args_parser
 import util
@@ -14,10 +11,10 @@ import math
 import swarmfish.swarm_control as sc
 import swarmfish.obstacles as so
 
-TEST_OBSTACLE = False
+TEST_OBSTACLE = True
 SHOW_DIRECTION = True
 SHOW_ARENA = True
-SHOW_INFLUENTIALS = False
+SHOW_INFLUENTIALS = True
 NB_INFLUENTIAL = 2
 
 POS_NOISE = 0.
@@ -84,7 +81,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             #   X  Y  Z       Q1   Q2   Q3  Q4   R  P   Y        VX     VY    VZ                  WX WY WZ     P0 P1 P2 P3
             uav_name = str(uav_id)
             state = states[uav_name]
-            wall = None # self.arena.get_wall(state, self.params)
+            wall = self.arena.get_wall(state, self.params)
             obstacles = []
             if TEST_OBSTACLE:
                 obstacles = [ o.get_wall(state, self.params) for o in [self.obstacle, self.polygon] if o is not None ]

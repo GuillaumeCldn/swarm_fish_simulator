@@ -17,7 +17,6 @@ from swarmfish.utils import load_polygons_from_json
 import panel_flow as pgflow
 from building import Building
 
-TEST_OBSTACLE = True
 SHOW_DIRECTION = True
 SHOW_INFLUENTIALS = False
 USE_PANEL_FLOW = True

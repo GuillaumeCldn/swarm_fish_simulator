@@ -57,7 +57,7 @@ class SwarmFish_Environment():
 
         #### Initialize the simulation #############################
         dim = math.ceil(math.sqrt(self.num_drones))
-        dist = 2.
+        dist = 5.
 
         AGGR_PHY_STEPS = (
             int(self.simulation_freq_hz / self.control_freq_hz) if self.aggregate else 1
@@ -360,10 +360,9 @@ def make_args_parser():
     parser.add_argument(
         "--drone",
         default=["robobee"],
-        type=list,
+        nargs='+',
         help="Drone model",
         metavar="",
-        choices=[DroneModel],
     )
     parser.add_argument(
         "--num_drones",
