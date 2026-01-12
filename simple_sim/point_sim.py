@@ -13,6 +13,7 @@ import threading
 import numpy as np
 import yaml
 from scipy.spatial.transform import Rotation
+from dataclasses import dataclass, field
 
 #
 # Utility functions
@@ -46,15 +47,15 @@ class QuadrotorState:
     """Complete state representation of a quadrotor.
 
     Attributes:
-        p: Position in world frame (m)
-        v: Linear velocity in world frame (m/s)
+        pos: Position in world frame (m)
+        vel: Linear velocity in world frame (m/s)
         acc: Linear acceleration in world frame (m/s^2)
         att: Attitude [roll, pitch, yaw] in radians
         omega: Angular velocity in body frame (rad/s)
         omegad: Angular acceleration in body frame (rad/s^2)
     """
-    p: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0, 0.0]))
-    v: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0, 0.0]))
+    pos: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0, 0.0]))
+    vel: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0, 0.0]))
     acc: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0, 0.0]))
     att: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0, 0.0]))  # roll, pitch, yaw
     omega: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0, 0.0]))
@@ -166,7 +167,7 @@ class PointSim:
 
             # Calculate required yaw acceleration and bound
             omegad_z = (desired_yaw_rate - self.omega[2]) / self.t_const_yaw
-            omegad_z = max(-self.omegad_max, min(self.omegad_max, omega_z))
+            omegad_z = max(-self.omegad_max, min(self.omegad_max, omegad_z))
             omegad = np.array([0.0, 0.0, float(omegad_z)])
             # Update attitude using current omega (z axis only)
             attitude_yaw = self.attitude[2]  + self.omega[2] * time_step
@@ -272,8 +273,8 @@ class PointSim:
         """
         with self.lock:
             state = QuadrotorState(
-                p=self.position.copy(),
-                v=self.velocity.copy(),
+                pos=self.position.copy(),
+                vel=self.velocity.copy(),
                 att=self.attitude.copy(),
                 omega=self.omega.copy(),
                 acc=self.acceleration.copy(),
