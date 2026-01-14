@@ -41,7 +41,7 @@ class SwarmFish_Environment():
         if create_env:
             # Initialize the simulation on a square
             dim = math.ceil(math.sqrt(self.num_drones))
-            dist = 5.
+            dist = 1.
             init_state = np.array([[ dist*(i % dim), dist*math.floor(i / dim), 0., 0. ] for i in range(self.num_drones)]) 
             if self.random_init:
                 init_state[:,3] = 2.*np.pi*np.random.rand(self.num_drones)

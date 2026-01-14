@@ -15,7 +15,7 @@ TEST_OBSTACLE = True
 SHOW_DIRECTION = True
 SHOW_ARENA = True
 SHOW_INFLUENTIALS = True
-NB_INFLUENTIAL = 2
+NB_INFLUENTIAL = 1
 
 POS_NOISE = 0.
 SPEED_NOISE = 0. #0.1
@@ -34,7 +34,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             self.view.add_cylinder(radius=arena_radius, height=0.01, pos=arena_center, color=(0,1,0,1))
 
         init_yaw = [ self.obs[j].att[2] for j in range(self.num_drones) ]
-        self.desired_course = np.array(init_yaw) # np.zeros(self.num_drones)
+        #self.desired_course = np.array(init_yaw) # np.zeros(self.num_drones)
 
         if TEST_OBSTACLE:
             obstacle_radius = 0.5
@@ -99,18 +99,20 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                     for l, influential in zip(self.lines[uav_id], influentials):
                         self.view.move_line(l, state.pos, states[int(influential[1])].pos)
             #desired_course = sc.wrap_to_pi(state.get_course() + cmd.delta_course)
-            self.desired_course[uav_id] = sc.wrap_to_pi(self.desired_course[uav_id] + cmd.delta_course / self.simulation_freq_hz)
-            desired_course = self.desired_course[uav_id] + 0.1*np.random.rand()
+            #self.desired_course[uav_id] = sc.wrap_to_pi(self.desired_course[uav_id] + cmd.delta_course / self.simulation_freq_hz)
+            #desired_course = self.desired_course[uav_id] + 0.1*np.random.rand()
+            yaw_rate = cmd.delta_course #/ self.simulation_freq_hz
+            #print(uav_id, yaw_rate)
             #print(f'desired course {uav_name}: {np.degrees(desired_course):0.2f} | {np.degrees(state.get_course()):0.2f} + {np.degrees(cmd.delta_course):0.2f}')
             # TODO fix heading/rates
             magnitude = self.speed_setpoint + cmd.delta_speed # TODO clip min/max
             if uav_id in self.intruders_id:
                 magnitude *= 2.
             speed = np.array([
-                magnitude * math.cos(desired_course),
-                magnitude * math.sin(desired_course),
+                magnitude * math.cos(state.get_course(use_heading=True)),
+                magnitude * math.sin(state.get_course(use_heading=True)),
                 cmd.delta_vz,
-                desired_course])
+                yaw_rate])
             self.commands[uav_id] = speed
 
             if SHOW_DIRECTION:
