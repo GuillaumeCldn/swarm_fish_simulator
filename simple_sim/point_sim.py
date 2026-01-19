@@ -89,10 +89,10 @@ class PointSim:
     
     """
 
-    DEFAULT_MAX_ACCEL_H = 2.0  # m/s^2
+    DEFAULT_MAX_ACCEL_H = 4.0  # m/s^2
     DEFAULT_MAX_ACCEL_V = 2.0  # m/s^2
-    DEFAULT_MAX_OMEGAD = 1.0  # rad/s^2
-    DEFAULT_T_CONST_H = 0.5 # s
+    DEFAULT_MAX_OMEGAD = np.radians(500)  # rad/s^2
+    DEFAULT_T_CONST_H = 0.1 # s
     DEFAULT_T_CONST_V = 0.25 # s
     DEFAULT_T_CONST_Y = 0.1 #
     
