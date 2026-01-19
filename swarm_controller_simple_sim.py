@@ -23,7 +23,7 @@ import swarmfish.swarm_control as sc
 def ms_of_hz(freq):
     return int(1000 / freq)
 
-SIMULATION_FREQ = 100 # in Hz
+SIMULATION_FREQ = 20 # in Hz
 CONTROL_FREQ = 10  # in HZ
 NB_OF_DRONES = 5
 
