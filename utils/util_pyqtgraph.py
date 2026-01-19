@@ -1,6 +1,5 @@
 import numpy as np
 import trimesh
-import pybullet as p
 import pyqtgraph.opengl as gl
 
 SPHERE   = 2
@@ -11,15 +10,6 @@ PLANE    = 6
 CAPSULE  = 7
 
 Nres = 50
-
-def bullet2pyqtgraph(Id):
-    shape_data = p.getVisualShapeData(int(Id))
-    mesh_items = []
-    for i in range(len(shape_data)):
-        # process item i
-        mesh = visualGeometryType2mesh(shape_data[i])
-        mesh_items.append(mesh)
-    return mesh_items
 
 def quaternion2axis_angle(quaternion):
     " quaternion: [x,y,z,w] (shape used in Bullet Physics)"

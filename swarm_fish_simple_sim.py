@@ -3,7 +3,6 @@ import sys
 from PyQt6.QtWidgets import QApplication
 
 from swarm_controller_simple_sim import SwarmFish_Environment, SwamFish_View, SwarmFish_Controller, ms_of_hz, make_args_parser
-import util
 
 import numpy as np
 import math

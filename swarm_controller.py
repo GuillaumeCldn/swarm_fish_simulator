@@ -1,6 +1,4 @@
 import sys
-sys.path.append('/home/gautier/dev/swarm/dronesim')
-sys.path.append('/home/gautier/dev/swarm/UavSwarmFish')
 
 import pybullet as p
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QDockWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QSlider
@@ -9,7 +7,8 @@ from ui_swarm_controller import Ui_SwarmController
 
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
-import util
+import utils.util_pqtgraph as utqg
+import utils.util_pybullet as utpb
 
 import argparse
 import dataclasses
@@ -20,7 +19,6 @@ from dronesim.control.INDIControl import INDIControl
 from dronesim.envs.BaseAviary import DroneModel, Physics
 from dronesim.envs.VelocityAviary import VelocityAviary
 from dronesim.envs.CtrlAviary import CtrlAviary
-from dronesim.utils.Logger import Logger
 from dronesim.utils.trajGen import *
 from dronesim.utils.utils import str2bool, sync
 
@@ -126,7 +124,7 @@ class SwamFish_View(QMainWindow):
         p.createMultiBody(baseCollisionShapeIndex=polygon_id)
 
     def add_cylinder(self, radius:float, height:float, pos:np.ndarray, res:int=20, color=(1.,1.,1.,1.)):
-        verts, faces = util.cylinder_mesh(radius, height, res)
+        verts, faces = utpg.cylinder_mesh(radius, height, res)
         mesh = gl.GLMeshItem(vertexes=verts,faces=faces,drawFaces=True,
                     drawEdges=False,smooth=False,computeNormals=True,
                     shader='shaded',glOptions='opaque')
@@ -137,7 +135,7 @@ class SwamFish_View(QMainWindow):
         self.add_polygon_to_env(self.create_cylinder(radius, height, pos, res))
 
     def add_polygon(self, vertices:np.ndarray, height:float, color=(1., 1., 1., 1.)):
-        verts, faces = util.polygon_mesh(vertices, height)
+        verts, faces = utpg.polygon_mesh(vertices, height)
         mesh = gl.GLMeshItem(vertexes=verts,faces=faces,drawFaces=True,
                     drawEdges=False,smooth=False,computeNormals=True,
                     shader='shaded',glOptions='opaque')
@@ -148,7 +146,7 @@ class SwamFish_View(QMainWindow):
 
 
     def add_object(self, mesh_id, mesh, text=None):
-        v,f = util.box_mesh((0.1,0.1,0.1))
+        v,f = utpg.box_mesh((0.1,0.1,0.1))
         m0 =  gl.GLMeshItem(vertexes=v,faces=f,drawFaces=False,
                     drawEdges=False,smooth=False,computeNormals=False,shader=None)
         self.view.addItem(m0)
@@ -164,8 +162,8 @@ class SwamFish_View(QMainWindow):
 
     def move_object(self, obj_id):
         pos, quat = p.getBasePositionAndOrientation(int(obj_id))
-        angle,x,y,z = util.quaternion2axis_angle(quat)
-        roll,pitch,yaw = util.quaternion2roll_pitch_yaw(quat)
+        angle,x,y,z = utpg.quaternion2axis_angle(quat)
+        roll,pitch,yaw = utpg.quaternion2roll_pitch_yaw(quat)
         self.mesh_list[obj_id][0].resetTransform()
         self.mesh_list[obj_id][0].rotate(np.degrees(angle),x,y,z,local=True)
         self.mesh_list[obj_id][0].translate(pos[0],pos[1],pos[2])
@@ -214,7 +212,7 @@ class SwarmFish_Controller(QWidget, Ui_SwarmController):
         self.obs, _, _, _ = self.env.step(self.action)
 
         for d in env.DRONE_IDS:
-            mesh = util.bullet2pyqtgraph(d)
+            mesh = utpb.bullet2pyqtgraph(d)
             view.add_object(d, mesh, text=str(d-1)) # FIXME shift due to ground plane in pybullet
 
         #### load params from config file 

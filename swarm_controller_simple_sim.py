@@ -6,7 +6,7 @@ from ui_swarm_controller import Ui_SwarmController
 
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
-import util
+import utils.util_pyqtgraph as utqg
 import trimesh
 from scipy.spatial.transform import Rotation as R
 
@@ -94,7 +94,7 @@ class SwamFish_View(QMainWindow):
         return np.vstack((bottom,top))
     
     def add_cylinder(self, radius:float, height:float, pos:np.ndarray, res:int=20, color=(1.,1.,1.,1.)):
-        verts, faces = util.cylinder_mesh(radius, height, res)
+        verts, faces = utqg.cylinder_mesh(radius, height, res)
         mesh = gl.GLMeshItem(vertexes=verts,faces=faces,drawFaces=True,
                     drawEdges=False,smooth=False,computeNormals=True,
                     shader='shaded',glOptions='opaque')
@@ -103,7 +103,7 @@ class SwamFish_View(QMainWindow):
         self.view.addItem(mesh)
 
     def add_polygon(self, vertices:np.ndarray, height:float, color=(1., 1., 1., 1.)):
-        verts, faces = util.polygon_mesh(vertices, height)
+        verts, faces = utqg.polygon_mesh(vertices, height)
         mesh = gl.GLMeshItem(vertexes=verts,faces=faces,drawFaces=True,
                     drawEdges=False,smooth=False,computeNormals=True,
                     shader='shaded',glOptions='opaque')
@@ -171,7 +171,6 @@ class SwarmFish_Controller(QWidget, Ui_SwarmController):
         self.obs = self.env.step(self.commands)
 
         for d in range(env.num_drones):
-            #mesh = util.bullet2pyqtgraph(d)
             mesh = trimesh.load_mesh(ARGS.mesh_file)
             mesh_data = gl.MeshData(vertexes=mesh.vertices, faces=mesh.faces)
             vertices = mesh_data.vertexes() / 1000.
