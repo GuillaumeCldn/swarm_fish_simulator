@@ -282,4 +282,21 @@ class PointSim:
             )
         return state
 
+    def as_ndarray(self) -> np.ndarray:
+        '''
+        Get current state as ndarray for logging
+
+        Returns
+        _______
+        np.ndarray
+            [pos vel angles rates].
+        '''
+        with self.lock:
+            state = np.concatenate([
+                self.position.copy(),
+                self.velocity.copy(),
+                self.attitude.copy(),
+                self.omega.copy()]
+            )
+        return state
 

@@ -8,6 +8,7 @@ from datetime import datetime
 import numpy as np
 import math
 
+from simple_sim.point_sim import PointSim, QuadrotorState
 from swarm_controller_simple_sim import SwarmFish_Environment, ms_of_hz, make_args_parser
 from utils.util_logger import Logger
 
@@ -30,10 +31,10 @@ def run_simulation(ARGS: dict):
     #### Create the environment
     sim = [ PointSim(init_position=x0[0:3], init_yaw=x0[3]) for x0 in init_state ]
 
-    def get_states(self):
+    def get_states():
         return [ sim[i].get_state() for i in range(ARGS.num_drones) ]
 
-    def step(self, commands):
+    def step(commands):
         for i in range(ARGS.num_drones):
             sim[i].update_state(
                     desired_velocity=commands[i][0:3],
@@ -102,13 +103,13 @@ def run_simulation(ARGS: dict):
             for j in range(ARGS.num_drones):
                 logger.log(drone=j,
                            timestamp=i/ARGS.simulation_freq_hz,
-                           state=obs[j],
+                           state=sim[j].as_ndarray(),
                            control=commands[j]
                            )
 
     #### Save the simulation results ###########################
     if ARGS.save_quant:
-        quant = compute_quantification(logger.states, int(logger.state_length * 0.2))
+        quant = compute_quantification(logger.states, int(logger.nb_steps * 0.2))
         file_name = os.path.join(ARGS.log_file_path, 'quant_'+ARGS.log_name+'.txt')
         #np.savez(file_name, quant=quant)
         np.savetxt(file_name, quant.reshape((1,6)))
@@ -123,7 +124,6 @@ if __name__ == "__main__":
         description="Phase diagram simulation",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument("--drone", default=["robobee"], type=list, help="Drone model", metavar="", choices=[DroneModel])
     parser.add_argument("--num_drones", default=5, type=int, help="Number of drones", metavar="")
     parser.add_argument("--speed_setpoint", default=1., type=float, help="speed setpoint", metavar="")
     parser.add_argument("--simulation_freq_hz", default=20, type=int, help="Simulation frequency in Hz", metavar="")
@@ -132,10 +132,10 @@ if __name__ == "__main__":
     parser.add_argument("--log_file_path", default='logs/', type=str, help="Log file path", metavar="")
     parser.add_argument("--duration_sec", default=20, type=int, help="Duration of the simulation in seconds", metavar="")
     parser.add_argument("--swarm_config", default='config/demo.yaml', type=str, help="SwarmFish parameter file", metavar="")
-    parser.add_argument("--random_init",  default=True, type=str2bool, help="Randomize init (heading only)", metavar="")
+    parser.add_argument("--random_init", action='store_true', help="Randomize init (heading only)")
     parser.add_argument("--y_att", default=0.5, type=float, help="attraction coefficient", metavar="")
     parser.add_argument("--y_ali", default=0.5, type=float, help="aligment coefficient", metavar="")
-    parser.add_argument("--save_quant", default=False, type=str2bool, help="Save quantification instead of full log", metavar="")
+    parser.add_argument("--save_quant", action='store_true', help="Save quantification instead of full log")
     ARGS = parser.parse_args()
 
     try:

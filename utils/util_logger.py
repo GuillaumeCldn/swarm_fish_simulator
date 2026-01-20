@@ -36,10 +36,11 @@ class Logger(object):
         self.NUM_DRONES = num_drones
         self.PREALLOCATED_ARRAYS = False if duration_sec == 0 else True
         self.counters = np.zeros(num_drones)
-        self.timestamps = np.zeros((num_drones, duration_sec * self.LOGGING_FREQ_HZ))
+        self.nb_steps = duration_sec * self.LOGGING_FREQ_HZ
+        self.timestamps = np.zeros((num_drones, self.nb_steps))
         #### Note: this is the suggest information to log ##############################
         self.states = np.zeros(
-            (num_drones, self.state_length, duration_sec * self.LOGGING_FREQ_HZ)
+            (num_drones, self.state_length, self.nb_steps)
         )  #### 12 states:
         # pos_x, pos_y, pos_z,
         # vel_x, vel_y, vel_z,
@@ -47,7 +48,7 @@ class Logger(object):
         # ang_vel_x, ang_vel_y, ang_vel_z,
         #### Note: this is the suggest information to log ##############################
         self.controls = np.zeros(
-            (num_drones, self.control_length, duration_sec * self.LOGGING_FREQ_HZ)
+            (num_drones, self.control_length, self.nb_steps)
         )  #### 4 control targets:
         # vel_x, vel_y, vel_z, ang_vel_z
 
