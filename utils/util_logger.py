@@ -121,3 +121,11 @@ class Logger(object):
                 controls=self.controls,
             )
 
+    def get_positions(self):
+        """ return positions for all UAVs """
+        return self.states[:,0:3,:]
+
+    def get_velocities(self):
+        """ return velocities for all UAVs """
+        return self.states[:,3:6,:]
+

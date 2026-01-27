@@ -109,7 +109,7 @@ def run_simulation(ARGS: dict):
 
     #### Save the simulation results ###########################
     if ARGS.save_quant:
-        quant = compute_quantification(logger.states, int(logger.nb_steps * 0.2))
+        quant = compute_quantification(logger.get_positions(), logger.get_velocities(), int(logger.nb_steps * 0.2))
         file_name = os.path.join(ARGS.log_file_path, 'quant_'+ARGS.log_name+'.txt')
         #np.savez(file_name, quant=quant)
         np.savetxt(file_name, quant.reshape((1,6)))
