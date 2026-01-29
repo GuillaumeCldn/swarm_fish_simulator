@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument("log_path", type=str, help="log files path")
 parser.add_argument("swarm_config", type=str, help="swarm config yaml file")
 parser.add_argument("--config", type=str, default="config.json", help="json config file")
+parser.add_argument("--sim", type=str, default="simu_phase_diagram_simple_sim.py", help="simulator (python file name)")
 parser.add_argument("--pool_size", type=int, default=4, help="job pool size")
 parser.add_argument("--quant", action='store_true', help="only save quantification, no full logs")
 parser.add_argument("--num_drones", type=int, default=5, help="number of drones")
@@ -46,7 +47,7 @@ else:
 
 def run_cmd(param: dict):
     start_sim = datetime.datetime.now()
-    cmd = ['python', 'simu_phase_diagram_simple_sim.py',
+    cmd = ['python', f'{args.sim}',
             f'--swarm_config={args.swarm_config}',
             f'--speed_setpoint={args.speed}',
             f'--num_drones={args.num_drones}',
@@ -55,13 +56,14 @@ def run_cmd(param: dict):
             f'--log_file_path={args.log_path}',
             f'--y_att={param["y_att"]}',
             f'--y_ali={param["y_ali"]}',
+            '--random_init',
             quant_opt
             ]
     subprocess.run(cmd)
     print(f'Done [{param["count"]}] in [{datetime.datetime.now()-start_sim}]: {" ".join(cmd)}')
 
-y_atts = np.arange(config['y_att'][0], config['y_att'][1] + config['y_att'][2], config['y_att'][2])
-y_alis = np.arange(config['y_ali'][0], config['y_ali'][1] + config['y_ali'][2], config['y_ali'][2])
+y_atts = np.arange(config['y_att'][0], config['y_att'][1], config['y_att'][2])
+y_alis = np.arange(config['y_ali'][0], config['y_ali'][1], config['y_ali'][2])
 
 nb_run = len(y_atts)*len(y_alis)*args.samples
 idx = 0
