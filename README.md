@@ -1,4 +1,21 @@
-# swarm_fish_dronesim
+# UAV swarm simulator
+
+## Installation 
+
+Clone this repository in a folder adjacent to the folder containing the [UavSwarmFish](https://github.com/GuillaumeCldn/UavSwarmFish) repository:
+
+```text
+Project Root
+├── UavSwarmFish/
+└── swarm_fish_simulator/
+```
+
+Initialise a python virtual environment in `./swarm_fish_simulator/` and download packages in `requirements.txt`.
+
+In `./swarm_fish_simulator/bin/activate` export the path to `./UavSwarmFish/`to `$PYTHONPATH`.
+
+Activate the virtual environment.
+
 
 ## Scripts
 
