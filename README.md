@@ -10,7 +10,7 @@ Project Root
 └── swarm_fish_simulator/
 ```
 
-Initialise a python virtual environment in `./swam_fish_simulator/` and download packages in `requirements.txt`.
+Initialise a python virtual environment in `./swarm_fish_simulator/` and download packages in `requirements.txt`.
 
 In `./swarm_fish_simulator/bin/activate` export the path to `./UavSwarmFish/`to `$PYTHONPATH`.
 

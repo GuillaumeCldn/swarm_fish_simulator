@@ -1,5 +1,5 @@
 numpy
-pybullet
+# pybullet
 gym
 Pillow
 scipy

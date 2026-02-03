@@ -1,7 +1,13 @@
 import json
 import sys
-sys.path.append('/home/gautier/dev/swarm/UavSwarmFish')
 from os import path
+
+# Get absolute path of this script
+script_dir = path.dirname(path.abspath(__file__))
+# Join with relative path to UavSwarmFish
+target_folder = path.join(script_dir, '../UavSwarmFish')
+# Pass absolute path of UavSwarmFish to sys.path
+sys.path.append(path.abspath(target_folder))
 
 import argparse
 import numpy as np
