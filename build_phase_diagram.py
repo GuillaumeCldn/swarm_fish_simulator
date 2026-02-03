@@ -93,4 +93,3 @@ finally:
 
 end_time = datetime.datetime.now()
 print(f'End simulations at time: {end_time}, in {end_time - start_time}')
-
