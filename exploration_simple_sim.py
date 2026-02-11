@@ -10,9 +10,11 @@ import math
 import swarmfish.swarm_control as sc
 import swarmfish.obstacles as so
 
+
 TEST_OBSTACLE = False
 SHOW_DIRECTION = True
 SHOW_ARENA = True
+SHOW_CELLS = True
 SHOW_INFLUENTIALS = True
 NB_INFLUENTIAL = 1
 
@@ -23,42 +25,60 @@ HEADING_NOISE = 0.
 
 class Cell():
 
-    def __init__(self, id:int, x:float, y:float, cell_lx:float, cell_ly:float):
-        self.id = id
+    def __init__(self, idx:int, idy:int, x:float, y:float, cell_lx:float, cell_ly:float):
+        self.id = (idx, idy)
         self.overfly_count = 0
+        self.position = (x, y)
+        self.size = (cell_lx, cell_ly)
         self.vertices = np.array([[x, y], 
                                   [x+cell_lx, y], 
                                   [x, y+cell_ly], 
                                   [x+cell_lx, y+cell_ly]
                                   ])
 
+    def __repr__(self) -> str:
+        return f"Id: {self.id}, position: ({self.position}), size: ({self.size}), count: {self.overfly_count}"
+
 
 class Exploration_Area_Rect():
 
     def __init__(self, lx:float, ly:float, nb_cells_x:int, nb_cells_y:int):
-        self.nb_cells = nb_cells_x * nb_cells_y
         self.total_size = lx * ly
-        self.cell_lx = lx/nb_cells_x
-        self.cell_ly = ly/nb_cells_y
-        self.origin = np.array([-lx/2, ly/2])
+        self.lx = lx
+        self.ly = ly
+        self.origin = np.array([0, 0])
         self.vertices = np.array([self.origin, 
                                   self.origin + np.array([lx,0.]), 
                                   self.origin + np.array([0., ly]), 
                                   self.origin + np.array([lx, ly])
                                   ])
-        self.cells = []
+        self.nb_cells = nb_cells_x * nb_cells_y
+        self.nb_cells_x = nb_cells_x
+        self.nb_cells_y = nb_cells_y
+        self.cell_lx = lx/nb_cells_x
+        self.cell_ly = ly/nb_cells_y
+    
+    def __repr__(self) -> str:
+        return f"Size: {self.total_size}, origin: {self.origin}, #cells: {self.nb_cells}"
 
     def build_cells(self):
         '''
-        Funtion populates self.cells with grid of cells
+        Funtion populates self.cells with grid of cells.
         '''
-        pass
+        self.cells = []
+        for i in range(self.nb_cells_x):
+            temp_list = []
+            for j in range(self.nb_cells_y):
+                temp_list.append(Cell(i, j, self.origin[0]+i*self.cell_lx, self.origin[1]+j*self.cell_ly, self.cell_lx, self.cell_ly))
+            self.cells.append(temp_list)
+        self.cells = np.array(self.cells)
+        
 
-    def which_cell(self, x:float, y:float) -> int:
+    def which_cell(self, x:float, y:float): 
         '''
         Funtion returns cell.id of the cell which has coordinates x and y.
         '''
-        pass
+        return (int(x//self.cell_lx), int(y//self.cell_ly))
 
 
 
@@ -68,14 +88,23 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         super().__init__(ARGS, env, view)
 
         #### Init SwarmFish ########################################
-        arena = Exploration_Area_Rect(100., 100., 100, 100)
-        arena_radius = math.sqrt(2)*100.
+        arena = Exploration_Area_Rect(10., 10., 10, 10)
+        arena.build_cells()
+        arena_radius = math.sqrt(2)*10.
         arena_center = np.array([0., 0., 0.])
+
+        # TODO: Change drone arena from circle to square
         self.arena = so.Arena(center=arena_center[0:2], radius=arena_radius, name="arena")
 
-        # TODO: Show arena
         if SHOW_ARENA:
             self.view.add_polygon(vertices=arena.vertices, height=0.01, color=(0,1,0,1))
+
+        if SHOW_CELLS:
+            for i in range(arena.nb_cells_x):
+                for j in range(arena.nb_cells_y):
+                    self.view.add_polygon(vertices=arena.cells[i][j].vertices, height=0.1, color=(0,1,1,1))
+
+
 
         init_yaw = [ self.obs[j].att[2] for j in range(self.num_drones) ]
         #self.desired_course = np.array(init_yaw) # np.zeros(self.num_drones)
