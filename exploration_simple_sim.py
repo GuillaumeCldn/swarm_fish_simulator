@@ -21,7 +21,7 @@ NB_INFLUENTIAL = 1
 POS_NOISE = 0.
 SPEED_NOISE = 0. #0.1
 HEADING_NOISE = 0.
-
+MAX_OVERFLY = 5
 
 class Cell():
 
@@ -38,6 +38,12 @@ class Cell():
 
     def __repr__(self) -> str:
         return f"Id: {self.id}, position: ({self.position}), size: ({self.size}), count: {self.overfly_count}"
+
+    def overfly(self):
+        if self.overfly_count < MAX_OVERFLY:
+            self.overfly_count += 1
+    # TODO: Add freshness to counter
+
 
 
 class Exploration_Area_Rect():
@@ -78,7 +84,11 @@ class Exploration_Area_Rect():
         '''
         Funtion returns cell.id of the cell which has coordinates x and y.
         '''
-        return (int(x//self.cell_lx), int(y//self.cell_ly))
+        if self.origin[0] <= x <= self.origin[0]+self.lx:
+            if self.origin[1] <= y <= self.origin[1]+self.ly:
+                return (int(x//self.cell_lx), int(y//self.cell_ly))
+        else:
+            return None
 
 
 
@@ -88,22 +98,21 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         super().__init__(ARGS, env, view)
 
         #### Init SwarmFish ########################################
-        arena = Exploration_Area_Rect(10., 10., 10, 10)
-        arena.build_cells()
         arena_radius = math.sqrt(2)*10.
         arena_center = np.array([0., 0., 0.])
-
+        
+        self.cell_arena = Exploration_Area_Rect(10., 10., 10, 10)
+        self.cell_arena.build_cells()
         # TODO: Change drone arena from circle to square
         self.arena = so.Arena(center=arena_center[0:2], radius=arena_radius, name="arena")
 
         if SHOW_ARENA:
-            self.view.add_polygon(vertices=arena.vertices, height=0.01, color=(0,1,0,1))
+            self.view.add_polygon(vertices=self.cell_arena.vertices, height=0.01, color=(0,1,0,1))
 
         if SHOW_CELLS:
-            for i in range(arena.nb_cells_x):
-                for j in range(arena.nb_cells_y):
-                    self.view.add_polygon(vertices=arena.cells[i][j].vertices, height=0.1, color=(0,1,1,1))
-
+            for i in range(self.cell_arena.nb_cells_x):
+                for j in range(self.cell_arena.nb_cells_y):
+                    self.view.add_polygon(vertices=self.cell_arena.cells[i][j].vertices, height=min(0.1, 0.1+0.1*self.cell_arena.cells[i][j].overfly_count), color=(0,1,1,1))
 
 
         init_yaw = [ self.obs[j].att[2] for j in range(self.num_drones) ]
@@ -187,6 +196,13 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                 cmd.delta_vz,
                 yaw_rate])
             self.commands[uav_id] = speed
+            
+            # Compute & draw overflown cell
+            cell_id = controller.cell_arena.which_cell(state.pos[0], state.pos[1])
+            if cell_id is not None:
+                controller.cell_arena.cells[cell_id[0]][cell_id[1]].overfly()
+                print(controller.cell_arena.cells[cell_id[0]][cell_id[1]])
+
 
             if SHOW_DIRECTION:
                 for d, s in zip(self.directions[uav_id], self.speeds[uav_id]):
