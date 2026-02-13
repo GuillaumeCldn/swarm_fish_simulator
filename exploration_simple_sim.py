@@ -37,7 +37,6 @@ class Cell():
     def __init__(self, idx:int, idy:int, x:float, y:float, cell_lx:float, cell_ly:float, init_time:float):
         self.id = (idx, idy)
         self.last_ovfy_time = init_time
-        self.overfly_count = 0
         self.spoilage = MAX_SPOIL
         self.position = (x, y)
         self.size = (cell_lx, cell_ly)
@@ -49,7 +48,7 @@ class Cell():
         self.height = CELL_HMIN
 
     def __repr__(self) -> str:
-        return f"Id: {self.id}, position: ({self.position}), size: ({self.size}), count: {self.overfly_count}"
+        return f"Id: {self.id}, position: ({self.position}), size: ({self.size}), spoilage: {self.spoilage}"
 
     def calc_height(self):
         '''
