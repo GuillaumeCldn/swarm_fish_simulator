@@ -23,14 +23,22 @@ POS_NOISE = 0.
 SPEED_NOISE = 0. #0.1
 HEADING_NOISE = 0.
 MAX_OVERFLY = 5
-OVFY_PERIOD = 5. #s, minimum duration for overlfy to be registered
+OVFY_PERIOD = 10. #s, minimum duration for overlfy to be registered
+SPOIL_TIME = 30. #s, time after which spoilage should start increasing rapidly
+MAX_SPOIL = 100. # maximum spoilage value
+FRESHEN_AMOUNT = MAX_SPOIL/10. # amount by which spoilage is decreased when a cell is overflown
+CELL_HMIN = 0.1
+CELL_HMAX = 1.
+ALPHA = CELL_HMAX/MAX_SPOIL
+
 
 class Cell():
 
-    def __init__(self, idx:int, idy:int, x:float, y:float, cell_lx:float, cell_ly:float):
+    def __init__(self, idx:int, idy:int, x:float, y:float, cell_lx:float, cell_ly:float, init_time:float):
         self.id = (idx, idy)
-        self.overfly_time = time.time()
+        self.last_ovfy_time = init_time
         self.overfly_count = 0
+        self.spoilage = MAX_SPOIL
         self.position = (x, y)
         self.size = (cell_lx, cell_ly)
         self.vertices = np.array([[x, y], 
@@ -38,19 +46,52 @@ class Cell():
                                   [x, y+cell_ly], 
                                   [x+cell_lx, y+cell_ly]
                                   ])
+        self.height = CELL_HMIN
 
     def __repr__(self) -> str:
         return f"Id: {self.id}, position: ({self.position}), size: ({self.size}), count: {self.overfly_count}"
 
-    def overfly(self):
-        time_since_last_ovfy = time.time() - self.overfly_time
-        if time_since_last_ovfy > OVFY_PERIOD:
-            if self.overfly_count < MAX_OVERFLY:
-                self.overfly_count += 1
-                self.overfly_time = time.time() # reset time since last overfly
-        print(f"Cell n°: {self.id}, time since last overlfy: {time_since_last_ovfy}, overfly count: {self.overfly_count}") 
-    # TODO: Add freshness to counter
+    def calc_height(self):
+        '''
+        Method updates the height of the cell proportionaly to the spoilage.
+        Cell height is constrained by CELL_HMIN and CELL_HMAX. 
+        '''
+        self.height = min(CELL_HMIN, CELL_HMAX - ALPHA*self.spoilage)
 
+
+    def overfly(self):
+        '''
+        Method populates increments the overfly count if the cell hasn't been visited in the 
+        last OVFY_PERIOD seconds.
+        The counter is limited to MAX_OVERFLY.
+        '''
+        time_since_last_ovfy = time.time() - self.last_ovfy_time
+        if time_since_last_ovfy > OVFY_PERIOD:
+                self.last_ovfy_time = time.time() # reset time since last overfly
+                self.freshen()
+
+    # WARN: Spoilage rate climbs to fast
+    # TODO: Find better function to update spoilage rate
+    def spoil(self):
+        '''
+        Method increases cell spoilage exponentially over time until spoilage reaches MAX_SPOIL.
+        '''
+        spoil_increase = math.exp(time.time()-self.last_ovfy_time-SPOIL_TIME)
+        if self.spoilage + spoil_increase < MAX_SPOIL:
+            self.spoilage += spoil_increase
+        else:
+            self.spoilage = MAX_SPOIL
+        self.calc_height()
+
+    def freshen(self):
+        '''
+        Method resets spoilage.
+        '''
+        if self.spoilage - FRESHEN_AMOUNT > 0:
+            self.spoilage -= FRESHEN_AMOUNT
+        else:
+            self.spoilage = 0
+        self.calc_height()
 
 
 class Exploration_Area_Rect():
@@ -70,26 +111,26 @@ class Exploration_Area_Rect():
         self.nb_cells_y = nb_cells_y
         self.cell_lx = lx/nb_cells_x
         self.cell_ly = ly/nb_cells_y
+        self.init_time = time.time()
     
     def __repr__(self) -> str:
         return f"Size: {self.total_size}, origin: {self.origin}, #cells: {self.nb_cells}"
 
     def build_cells(self):
         '''
-        Funtion populates self.cells with grid of cells.
+        Method populates self.cells with grid of cells.
         '''
         self.cells = []
         for i in range(self.nb_cells_x):
             temp_list = []
             for j in range(self.nb_cells_y):
-                temp_list.append(Cell(i, j, self.origin[0]+i*self.cell_lx, self.origin[1]+j*self.cell_ly, self.cell_lx, self.cell_ly))
+                temp_list.append(Cell(i, j, self.origin[0]+i*self.cell_lx, self.origin[1]+j*self.cell_ly, self.cell_lx, self.cell_ly, self.init_time))
             self.cells.append(temp_list)
         self.cells = np.array(self.cells)
-        
 
     def which_cell(self, x:float, y:float): 
         '''
-        Funtion returns cell.id of the cell which has coordinates x and y.
+        Method returns cell.id of the cell which has coordinates x and y.
         '''
         if self.origin[0] <= x <= self.origin[0]+self.lx:
             if self.origin[1] <= y <= self.origin[1]+self.ly:
@@ -97,6 +138,13 @@ class Exploration_Area_Rect():
         else:
             return None
 
+    def spoil_cells(self):
+        '''
+        Method spoils each cell in the arena.
+        '''
+        for i in range(self.nb_cells_x):
+            for j in range(self.nb_cells_y):
+                self.cells[i][j].spoil()
 
 
 class SwarmFish_Scenario(SwarmFish_Controller):
@@ -170,6 +218,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             self.obs[j].vel + SPEED_NOISE*noise[3:6],
             self.obs[j].att[2] + HEADING_NOISE*noise[6],
             self.current_time, str(j)) for j in range(self.num_drones) }
+        self.cell_arena.spoil_cells()
         #### Compute control for the current state #############
         for uav_id in range(self.num_drones):
             # If you need : obs[str(j)]["state"] include jth vehicle's
@@ -211,22 +260,24 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                 yaw_rate])
             self.commands[uav_id] = speed
             
-            # Compute & draw overflown cell
-            cell_id = controller.cell_arena.which_cell(state.pos[0], state.pos[1])
+            # Compute overflown cell
+            cell_id = self.cell_arena.which_cell(state.pos[0], state.pos[1])
             if cell_id is not None:
-                controller.cell_arena.cells[cell_id[0]][cell_id[1]].overfly()
+                self.cell_arena.cells[cell_id[0]][cell_id[1]].overfly()
 
 
             if SHOW_DIRECTION:
                 for d, s in zip(self.directions[uav_id], self.speeds[uav_id]):
                     self.view.move_line(d, state.pos, state.pos+speed[0:3])
                     self.view.move_line(s, state.pos, state.pos+state.speed)
-
+    
             #print(state)
             #print(f' wall {uav_id} | dist {wall[0]:.2f}, angle= {np.degrees(wall[1]):.2f}')
             #print(f' cmd {uav_id} | {np.degrees(cmd.delta_course):0.2f}, {cmd.delta_speed:0.3f}, {cmd.delta_vz:0.3f} | desired_course {np.degrees(desired_course):0.2f}')
             #print(' speed',uav_id,speed)
         #print('') # blank line
+        # self.draw_cells()
+        # TODO: Update cell height by drawing them again
 
 
 if __name__ == "__main__":
