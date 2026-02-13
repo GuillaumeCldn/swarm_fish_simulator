@@ -117,9 +117,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             self.view.add_polygon(vertices=self.cell_arena.vertices, height=0.01, color=(0,1,0,1))
 
         if SHOW_CELLS:
-            for i in range(self.cell_arena.nb_cells_x):
-                for j in range(self.cell_arena.nb_cells_y):
-                    self.view.add_polygon(vertices=self.cell_arena.cells[i][j].vertices, height=min(0.1, 0.1+0.1*self.cell_arena.cells[i][j].overfly_count), color=(0,1,1,1))
+            self.draw_cells()
 
         #init_yaw = [ self.obs[j].att[2] for j in range(self.num_drones) ]
         #self.desired_course = np.array(init_yaw) # np.zeros(self.num_drones)
@@ -152,6 +150,16 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         if start:
             self.start_simulation()
 
+    def draw_cells(self):
+        '''
+        Method draws each cell in the arena.
+        '''
+        # FIX: cells seem to be drawn at a 45° angle
+        for i in range(self.cell_arena.nb_cells_x):
+            for j in range(self.cell_arena.nb_cells_y):
+                cell = self.cell_arena.cells[i][j]
+                self.view.add_polygon(vertices=cell.vertices, height=cell.height, color=(0.,1.,1.,1.))
+            
 
     def update_action(self):
         #### Step the simulation ###################################
