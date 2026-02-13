@@ -6,6 +6,7 @@ from swarm_controller_simple_sim import SwarmFish_Environment, SwamFish_View, Sw
 
 import numpy as np
 import math
+import time
 
 import swarmfish.swarm_control as sc
 import swarmfish.obstacles as so
@@ -22,11 +23,13 @@ POS_NOISE = 0.
 SPEED_NOISE = 0. #0.1
 HEADING_NOISE = 0.
 MAX_OVERFLY = 5
+OVFY_PERIOD = 5. #s, minimum duration for overlfy to be registered
 
 class Cell():
 
     def __init__(self, idx:int, idy:int, x:float, y:float, cell_lx:float, cell_ly:float):
         self.id = (idx, idy)
+        self.overfly_time = time.time()
         self.overfly_count = 0
         self.position = (x, y)
         self.size = (cell_lx, cell_ly)
@@ -40,8 +43,12 @@ class Cell():
         return f"Id: {self.id}, position: ({self.position}), size: ({self.size}), count: {self.overfly_count}"
 
     def overfly(self):
-        if self.overfly_count < MAX_OVERFLY:
-            self.overfly_count += 1
+        time_since_last_ovfy = time.time() - self.overfly_time
+        if time_since_last_ovfy > OVFY_PERIOD:
+            if self.overfly_count < MAX_OVERFLY:
+                self.overfly_count += 1
+                self.overfly_time = time.time() # reset time since last overfly
+        print(f"Cell n°: {self.id}, time since last overlfy: {time_since_last_ovfy}, overfly count: {self.overfly_count}") 
     # TODO: Add freshness to counter
 
 
@@ -201,7 +208,6 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             cell_id = controller.cell_arena.which_cell(state.pos[0], state.pos[1])
             if cell_id is not None:
                 controller.cell_arena.cells[cell_id[0]][cell_id[1]].overfly()
-                print(controller.cell_arena.cells[cell_id[0]][cell_id[1]])
 
 
             if SHOW_DIRECTION:
