@@ -2,7 +2,7 @@ import sys
 
 from PyQt6.QtWidgets import QApplication
 
-from swarm_controller_simple_sim import SwarmFish_Environment, SwamFish_View, SwarmFish_Controller, ms_of_hz, make_args_parser
+from swarm_controller_simple_sim import SwarmFish_Environment, SwamFish_View, SwarmFish_Controller, make_args_parser
 
 import numpy as np
 import math
@@ -121,8 +121,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                 for j in range(self.cell_arena.nb_cells_y):
                     self.view.add_polygon(vertices=self.cell_arena.cells[i][j].vertices, height=min(0.1, 0.1+0.1*self.cell_arena.cells[i][j].overfly_count), color=(0,1,1,1))
 
-
-        init_yaw = [ self.obs[j].att[2] for j in range(self.num_drones) ]
+        #init_yaw = [ self.obs[j].att[2] for j in range(self.num_drones) ]
         #self.desired_course = np.array(init_yaw) # np.zeros(self.num_drones)
 
         if TEST_OBSTACLE:
@@ -141,7 +140,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         if SHOW_INFLUENTIALS:
             self.lines = {}
             for d in range(env.num_drones):
-                self.lines[d] = [ self.view.add_line(np.zeros(3), np.zeros(3)) for x in range(NB_INFLUENTIAL) ]
+                self.lines[d] = [ self.view.add_line(np.zeros(3), np.zeros(3)) for _ in range(NB_INFLUENTIAL) ]
 
         if SHOW_DIRECTION:
             self.directions = {}
@@ -168,7 +167,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             # If you need : obs[str(j)]["state"] include jth vehicle's
             # position [0:3]  quaternion [3:7]   Attitude[7:10]  VelocityInertialFrame[10:13]     qpr[13:16]   motors[16:20]
             #   X  Y  Z       Q1   Q2   Q3  Q4   R  P   Y        VX     VY    VZ                  WX WY WZ     P0 P1 P2 P3
-            uav_name = str(uav_id)
+            #uav_name = str(uav_id)
             state = states[uav_id]
             wall = self.arena.get_wall(state, self.params)
             obstacles = []
