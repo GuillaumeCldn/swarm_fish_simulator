@@ -84,6 +84,7 @@ ipython_config.py
 
 # vim
 *.swp
+.nvim.lua
 
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
