@@ -22,11 +22,12 @@ NB_INFLUENTIAL = 1
 POS_NOISE = 0.
 SPEED_NOISE = 0. # 0.1
 HEADING_NOISE = 0.
-MAX_OVERFLY = 5
+
 OVFY_PERIOD = 10. # s, minimum duration for overlfy to be registered
 SPOIL_TIME = 30. # s, time after which spoilage should start increasing rapidly
 MAX_SPOIL = 100. # maximum spoilage value
 FRESHEN_AMOUNT = MAX_SPOIL/10. # amount by which spoilage is decreased when a cell is overflown
+
 CELL_HMIN = 0.1
 CELL_HMAX = 1.
 ALPHA = CELL_HMAX/MAX_SPOIL # rate at which the cell height is updated
@@ -60,9 +61,7 @@ class Cell():
 
     def overfly(self):
         '''
-        Method populates increments the overfly count if the cell hasn't been visited in the 
-        last OVFY_PERIOD seconds.
-        The counter is limited to MAX_OVERFLY.
+        Method updates the time of last overfly of the cells and calls the freshen() method. 
         '''
         time_since_last_ovfy = time.time() - self.last_ovfy_time
         if time_since_last_ovfy > OVFY_PERIOD:
