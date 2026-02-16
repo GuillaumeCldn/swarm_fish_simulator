@@ -111,6 +111,7 @@ class Exploration_Area_Rect():
         self.cell_lx = lx/nb_cells_x
         self.cell_ly = ly/nb_cells_y
         self.init_time = time.time()
+        self.min_spoilage = float("inf")
     
     def __repr__(self) -> str:
         return f"Size: {self.total_size}, origin: {self.origin}, #cells: {self.nb_cells}"
@@ -224,7 +225,10 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             for j in range(self.cell_arena.nb_cells_y):
                 cell = self.cell_arena.cells[i][j]
                 spoilage += cell.spoilage
-        return spoilage/total_spoilage
+        current_spoilage = spoilage/total_spoilage
+        if self.cell_arena.min_spoilage > current_spoilage:
+            self.cell_arena.min_spoilage = current_spoilage
+        return current_spoilage
 
     def update_action(self):
         #### Step the simulation ###################################
@@ -295,7 +299,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             #print(f' cmd {uav_id} | {np.degrees(cmd.delta_course):0.2f}, {cmd.delta_speed:0.3f}, {cmd.delta_vz:0.3f} | desired_course {np.degrees(desired_course):0.2f}')
             #print(' speed',uav_id,speed)
         #print('') # blank line
-        print(f"Total spoilage = {self.measure_spoilage()*100:.2f}%")
+        print(f"Minimum spoilage = {self.cell_arena.min_spoilage*100:.2f}, current spoilage = {self.measure_spoilage()*100:.2f}%")
 
 
 if __name__ == "__main__":
