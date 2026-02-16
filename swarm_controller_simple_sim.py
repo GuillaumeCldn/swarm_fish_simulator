@@ -110,6 +110,24 @@ class SwamFish_View(QMainWindow):
         mesh.setColor(color)
         self.view.addItem(mesh)
 
+    def build_mesh(self, vertices:np.ndarray, height:float, color=(1., 1., 1., 1.)):
+        verts, faces = utqg.polygon_mesh(vertices, height)
+        mesh = gl.GLMeshItem(vertexes=verts,faces=faces,drawFaces=True,
+                    drawEdges=False,smooth=False,computeNormals=True,
+                    shader='shaded',glOptions='opaque')
+        mesh.setColor(color)
+        return mesh
+    
+    def add_mesh(self, mesh):
+        self.view.addItem(mesh)
+
+    def remove_mesh(self, mesh):
+        self.view.removeItem(mesh)
+
+    def update_mesh(self, old_mesh, new_mesh):
+        self.view.removeItem(old_mesh)
+        self.view.addItem(new_mesh)
+
     def add_object(self, mesh_id, mesh, text=None, color=(255, 0, 0, 255)):
         m = gl.GLMeshItem(vertexes=mesh.vertexes(), faces=mesh.faces(),
                     color=color, drawFaces=True,

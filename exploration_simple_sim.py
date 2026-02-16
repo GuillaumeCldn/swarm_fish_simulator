@@ -46,6 +46,7 @@ class Cell():
                                   [x+cell_lx, y+cell_ly]
                                   ])
         self.height = CELL_HMIN
+        self.mesh = None
 
     def __repr__(self) -> str:
         return f"Id: {self.id}, position: ({self.position}), size: ({self.size}), spoilage: {self.spoilage}"
@@ -56,7 +57,6 @@ class Cell():
         Cell height is constrained by CELL_HMIN and CELL_HMAX. 
         '''
         self.height = min(CELL_HMIN, CELL_HMAX - ALPHA*self.spoilage)
-
 
     def overfly(self):
         '''
@@ -164,7 +164,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             self.view.add_polygon(vertices=self.cell_arena.vertices, height=0.01, color=(0,1,0,1))
 
         if SHOW_CELLS:
-            self.draw_cells()
+            self.draw_cells(init=True)
 
         #init_yaw = [ self.obs[j].att[2] for j in range(self.num_drones) ]
         #self.desired_course = np.array(init_yaw) # np.zeros(self.num_drones)
@@ -197,20 +197,29 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         if start:
             self.start_simulation()
 
-    def draw_cells(self):
+    def draw_cells(self, init=False):
         '''
         Method draws each cell in the arena.
+        By default, the method updates already drawn cells.
+        If init is set to True, the cell is drawn for the first time.
         '''
         # FIX: cells seem to be drawn at a 45° angle
         for i in range(self.cell_arena.nb_cells_x):
             for j in range(self.cell_arena.nb_cells_y):
                 cell = self.cell_arena.cells[i][j]
-                self.view.add_polygon(vertices=cell.vertices, height=cell.height, color=(0.,1.,1.,1.))
-            
+                if init:
+                    cell.mesh = self.view.build_mesh(vertices=cell.vertices, height=cell.height, color=(0.,1.,1.,1.)) 
+                    self.view.add_mesh(cell.mesh)
+                else:
+                    old_mesh = cell.mesh
+                    cell.mesh = self.view.build_mesh(vertices=cell.vertices, height=cell.height, color=(0.,1.,1.,1.)) 
+                    self.view.update_mesh(old_mesh, cell.mesh)
+
 
     def update_action(self):
         #### Step the simulation ###################################
 
+        self.draw_cells()
         noise = np.random.normal(size=7)
         states = { j: sc.State(
             self.obs[j].pos + POS_NOISE*noise[0:3],
@@ -275,12 +284,11 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             #print(f' cmd {uav_id} | {np.degrees(cmd.delta_course):0.2f}, {cmd.delta_speed:0.3f}, {cmd.delta_vz:0.3f} | desired_course {np.degrees(desired_course):0.2f}')
             #print(' speed',uav_id,speed)
         #print('') # blank line
-        # self.draw_cells()
-        # TODO: Update cell height by drawing them again
 
 
 if __name__ == "__main__":
 
+    # TODO: Add reward fucntion for cell exploration, and dispaly its value.
     parser = make_args_parser()
     args = parser.parse_args()
     env = SwarmFish_Environment(args)
