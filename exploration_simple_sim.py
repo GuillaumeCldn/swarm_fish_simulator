@@ -99,7 +99,7 @@ class Exploration_Area_Rect():
         self.total_size = lx * ly
         self.lx = lx
         self.ly = ly
-        self.origin = np.array([0, 0])
+        self.origin = np.array([0., 0.])
         self.vertices = np.array([self.origin, 
                                   self.origin + np.array([lx,0.]), 
                                   self.origin + np.array([0., ly]), 
@@ -153,16 +153,15 @@ class SwarmFish_Scenario(SwarmFish_Controller):
 
         #### Init SwarmFish ########################################
         arena_radius = math.sqrt(2)*10.
-        arena_center = np.array([0., 0., 0.])
+        arena_center = np.array([10., 10., 0.])
         
-        self.cell_arena = Exploration_Area_Rect(10., 10., 10, 10)
+        self.cell_arena = Exploration_Area_Rect(lx=20., ly=20., nb_cells_x=20, nb_cells_y=20)
         self.cell_arena.build_cells()
         # TODO: Change drone arena from circle to square
         self.arena = so.Arena(center=arena_center[0:2], radius=arena_radius, name="arena")
-
+        self.view.add_cylinder(radius=arena_radius, height=0.01, pos=arena_center, color=(1.,0.,0.,0.1))
         if SHOW_ARENA:
-            self.view.add_polygon(vertices=self.cell_arena.vertices, height=0.01, color=(0,1,0,1))
-
+            self.view.add_polygon(vertices=self.cell_arena.vertices, height=0.05, color=(0,1,0,1))
         if SHOW_CELLS:
             self.draw_cells(init=True)
 
@@ -203,7 +202,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         By default, the method updates already drawn cells.
         If init is set to True, the cell is drawn for the first time.
         '''
-        # FIX: cells seem to be drawn at a 45° angle
+        # FIX: cell faces seem to be drawn at a 45° angle
         for i in range(self.cell_arena.nb_cells_x):
             for j in range(self.cell_arena.nb_cells_y):
                 cell = self.cell_arena.cells[i][j]
