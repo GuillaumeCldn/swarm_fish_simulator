@@ -202,7 +202,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         By default, the method updates already drawn cells.
         If init is set to True, the cell is drawn for the first time.
         '''
-        # FIX: cell faces seem to be drawn at a 45° angle
+        # WARN: cell faces seem to be drawn at a 45° angle
         for i in range(self.cell_arena.nb_cells_x):
             for j in range(self.cell_arena.nb_cells_y):
                 cell = self.cell_arena.cells[i][j]
@@ -214,9 +214,21 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                     cell.mesh = self.view.build_mesh(vertices=cell.vertices, height=cell.height, color=(0.,1.,1.,1.)) 
                     self.view.update_mesh(old_mesh, cell.mesh)
 
+    def measure_spoilage(self):
+        '''
+        Method calculates the normalised spoilage of all cells in the exploration arena.
+        '''
+        spoilage = 0
+        total_spoilage = MAX_SPOIL*self.cell_arena.nb_cells
+        for i in range(self.cell_arena.nb_cells_x):
+            for j in range(self.cell_arena.nb_cells_y):
+                cell = self.cell_arena.cells[i][j]
+                spoilage += cell.spoilage
+        return spoilage/total_spoilage
 
     def update_action(self):
         #### Step the simulation ###################################
+        # WARN: The simulation is starting to slow.
 
         self.draw_cells()
         noise = np.random.normal(size=7)
@@ -283,11 +295,12 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             #print(f' cmd {uav_id} | {np.degrees(cmd.delta_course):0.2f}, {cmd.delta_speed:0.3f}, {cmd.delta_vz:0.3f} | desired_course {np.degrees(desired_course):0.2f}')
             #print(' speed',uav_id,speed)
         #print('') # blank line
+        print(f"Total spoilage = {self.measure_spoilage()*100:.2f}%")
 
 
 if __name__ == "__main__":
 
-    # TODO: Add reward fucntion for cell exploration, and dispaly its value.
+    # TODO: Display spoilage measurement.
     parser = make_args_parser()
     args = parser.parse_args()
     env = SwarmFish_Environment(args)
