@@ -202,7 +202,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         By default, the method updates already drawn cells.
         If init is set to True, the cell is drawn for the first time.
         '''
-        # WARN: cell faces seem to be drawn at a 45° angle
+        # WARN: cell faces are drawn in a cross at a 45° angle
         for i in range(self.cell_arena.nb_cells_x):
             for j in range(self.cell_arena.nb_cells_y):
                 cell = self.cell_arena.cells[i][j]
@@ -243,9 +243,11 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         self.cell_arena.spoil_cells()
         #### Compute control for the current state #############
         for uav_id in range(self.num_drones):
-            # If you need : obs[str(j)]["state"] include jth vehicle's
-            # position [0:3]  quaternion [3:7]   Attitude[7:10]  VelocityInertialFrame[10:13]     qpr[13:16]   motors[16:20]
-            #   X  Y  Z       Q1   Q2   Q3  Q4   R  P   Y        VX     VY    VZ                  WX WY WZ     P0 P1 P2 P3
+            '''
+            If you need : obs[str(j)]["state"] include jth vehicle's
+            position [0:3]  quaternion [3:7]   Attitude[7:10]  VelocityInertialFrame[10:13]     qpr[13:16]   motors[16:20]
+            X  Y  Z         Q1   Q2   Q3  Q4   R  P   Y        VX     VY    VZ                  WX WY WZ     P0 P1 P2 P3
+            '''
             #uav_name = str(uav_id)
             state = states[uav_id]
             wall = self.arena.get_wall(state, self.params)
