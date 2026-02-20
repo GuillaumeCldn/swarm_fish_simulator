@@ -138,11 +138,13 @@ class Exploration_Area_Rect():
         '''
         Method returns cell.id of the cell which has coordinates x and y.
         '''
+        cells = []
         if self.origin[0] <= x <= self.origin[0]+self.lx:
             if self.origin[1] <= y <= self.origin[1]+self.ly:
-                return (int(x//self.cell_lx), int(y//self.cell_ly))
+                cells.append((int(x//self.cell_lx), int(y//self.cell_ly)))
         else:
             return None
+        return cells
 
     def spoil_cells(self):
         '''
@@ -291,9 +293,10 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             self.commands[uav_id] = speed
             
             # Compute overflown cell
-            cell_id = self.cell_arena.which_cell(state.pos[0], state.pos[1])
-            if cell_id is not None:
-                self.cell_arena.cells[cell_id[0]][cell_id[1]].overfly(state.pos[2])
+            cells = self.cell_arena.which_cell(state.pos[0], state.pos[1])
+            if cells is not None:
+                for cell_id in cells:
+                    self.cell_arena.cells[cell_id[0]][cell_id[1]].overfly(state.pos[2])
 
 
             if SHOW_DIRECTION:
