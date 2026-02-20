@@ -33,7 +33,7 @@ CELL_HMAX = 1.
 ALPHA = CELL_HMAX/MAX_SPOIL # rate at which the cell height is updated
 
 SENSOR_VIEW_HEIGHT = 5 # m, height at which sensor resolution is average
-SENSOR_VIEW_ANGLE = 30 # °, half-aperture of sensor view cone
+SENSOR_VIEW_ANGLE = 60 # °, aperture of sensor view cone
 
 
 class Cell():
@@ -134,14 +134,58 @@ class Exploration_Area_Rect():
             self.cells.append(temp_list)
         self.cells = np.array(self.cells)
 
-    def which_cell(self, x:float, y:float): 
+    def in_EE(self, x:float, y:float):
         '''
-        Method returns cell.id of the cell which has coordinates x and y.
+        Method checks if coordinates are in the exploration area. 
+        '''
+        if (self.origin[0] <= x <= self.origin[0]+self.lx) and (self.origin[1] <= y <= self.origin[1]+self.ly):
+            return True
+        else:
+            return False
+    
+    def id_in_EE(self, idx:int, idy:int):
+        '''
+        '''
+        
+        if (0<=idx<=self.nb_cells_x) and (0<=idy<=self.nb_cells_y):
+            return True
+        else:
+            return False
+
+    def coords_to_id(self, x:float, y:float):
+        '''
+        Method returns the id of the cell which contains coordinates x and y.
+        '''
+        return (int(x//self.cell_lx), int(y//self.cell_ly))
+
+    def which_cells(self, x:float, y:float, z: float): 
+        '''
+        Method returns list of ids (tuple(idx, idy)) of cells which are in the drone's sensor fov.
         '''
         cells = []
-        if self.origin[0] <= x <= self.origin[0]+self.lx:
-            if self.origin[1] <= y <= self.origin[1]+self.ly:
-                cells.append((int(x//self.cell_lx), int(y//self.cell_ly)))
+        view_radius = z*math.tan((SENSOR_VIEW_ANGLE/2)*np.pi/180)
+        cell_count_x = int(view_radius // self.cell_lx) + 1
+        cell_count_y = int(view_radius // self.cell_ly) + 1
+        # Check if drone is above the exploration area
+        if self.in_EE(x, y):
+                idx_0, idy_0 = self.coords_to_id(x, y)
+                # Add all cells except corner cells
+                for i in range(-cell_count_x, cell_count_x+1):
+                    for j in range(-cell_count_y, cell_count_y+1):
+                        if (np.abs(i) == cell_count_x) and (np.abs(j) == cell_count_y):
+                            pass
+                        else:
+                            if self.id_in_EE(idx_0+i, idy_0+j):
+                                cells.append((idx_0+i, idy_0+j))
+                # Test if corner cells are in fov
+                for k in range(-1, 2):
+                    for l in range(-1, 2):
+                        if self.in_EE(x+k*view_radius, y+l*view_radius): 
+                            corner_candidate = self.coords_to_id(x+k*view_radius, y+l*view_radius)
+                            if corner_candidate not in cells:
+                                cells.append(corner_candidate)
+                            else:
+                                pass
         else:
             return None
         return cells
@@ -293,10 +337,11 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             self.commands[uav_id] = speed
             
             # Compute overflown cell
-            cells = self.cell_arena.which_cell(state.pos[0], state.pos[1])
+            cells = self.cell_arena.which_cells(state.pos[0], state.pos[1], state.pos[2])
             if cells is not None:
                 for cell_id in cells:
-                    self.cell_arena.cells[cell_id[0]][cell_id[1]].overfly(state.pos[2])
+                    if cell_id is not None:
+                        self.cell_arena.cells[cell_id[0]][cell_id[1]].overfly(state.pos[2])
 
 
             if SHOW_DIRECTION:
