@@ -43,8 +43,8 @@ class Cell():
         self.size = (cell_lx, cell_ly)
         self.vertices = np.array([[x, y], 
                                   [x+cell_lx, y], 
-                                  [x, y+cell_ly], 
-                                  [x+cell_lx, y+cell_ly]
+                                  [x+cell_lx, y+cell_ly],
+                                  [x, y+cell_ly] 
                                   ])
         self.height = CELL_HMIN
         self.mesh = None
@@ -101,8 +101,8 @@ class Exploration_Area_Rect():
         self.origin = np.array([0., 0.])
         self.vertices = np.array([self.origin, 
                                   self.origin + np.array([lx,0.]), 
-                                  self.origin + np.array([0., ly]), 
-                                  self.origin + np.array([lx, ly])
+                                  self.origin + np.array([lx, ly]),
+                                  self.origin + np.array([0., ly]) 
                                   ])
         self.nb_cells = nb_cells_x * nb_cells_y
         self.nb_cells_x = nb_cells_x
@@ -202,7 +202,6 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         By default, the method updates already drawn cells.
         If init is set to True, the cell is drawn for the first time.
         '''
-        # WARN: cell faces are drawn in a cross at a 45° angle
         for i in range(self.cell_arena.nb_cells_x):
             for j in range(self.cell_arena.nb_cells_y):
                 cell = self.cell_arena.cells[i][j]
