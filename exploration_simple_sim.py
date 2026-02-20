@@ -26,11 +26,14 @@ HEADING_NOISE = 0.
 OVFY_PERIOD = 10. # s, minimum duration for overlfy to be registered
 SPOIL_TIME = 30. # s, time after which spoilage should start increasing rapidly
 MAX_SPOIL = 100. # maximum spoilage value
-FRESHEN_AMOUNT = MAX_SPOIL/10. # amount by which spoilage is decreased when a cell is overflown
+FRESHEN_RATE = MAX_SPOIL/10. # amount by which spoilage is decreased when a cell is overflown
 
 CELL_HMIN = 0.1
 CELL_HMAX = 1.
 ALPHA = CELL_HMAX/MAX_SPOIL # rate at which the cell height is updated
+
+SENSOR_VIEW_HEIGHT = 5 # m, height at which sensor resolution is average
+SENSOR_VIEW_ANGLE = 30 # °, half-aperture of sensor view cone
 
 
 class Cell():
@@ -54,19 +57,19 @@ class Cell():
 
     def calc_height(self):
         '''
-        Method updates the height of the cell proportionaly to the spoilage.
+        Method updates the height of the cell proportionally to the spoilage.
         Cell height is constrained by CELL_HMIN and CELL_HMAX. 
         '''
         self.height = min(CELL_HMIN, CELL_HMAX - ALPHA*self.spoilage)
 
-    def overfly(self):
+    def overfly(self, drone_height:float):
         '''
         Method updates the time of last overfly of the cells and calls the freshen() method. 
         '''
         time_since_last_ovfy = time.time() - self.last_ovfy_time
         if time_since_last_ovfy > OVFY_PERIOD:
                 self.last_ovfy_time = time.time() # reset time since last overfly
-                self.freshen()
+                self.freshen(drone_height)
 
     # WARN: Spoilage rate climbs to fast
     # TODO: Find better function to update spoilage rate
@@ -81,12 +84,16 @@ class Cell():
             self.spoilage = MAX_SPOIL
         self.calc_height()
 
-    def freshen(self):
+    def freshen(self, drone_height:float):
         '''
-        Method resets spoilage.
+        Method decreases spoilage, thus "freshening" the cell.
+        To model data precision, the amount by which spoilage is decreased depends on the drone height.
+        SENSOR_VIEW_HEIGHT models the height at which the sensor's resolution is "average". It is used to 
+        calibrate the amount by which the cell is "freshened".
         '''
-        if self.spoilage - FRESHEN_AMOUNT > 0:
-            self.spoilage -= FRESHEN_AMOUNT
+        freshen_amount = FRESHEN_RATE*math.exp(-drone_height/(SENSOR_VIEW_HEIGHT*2))
+        if self.spoilage - freshen_amount > 0:
+            self.spoilage -= freshen_amount
         else:
             self.spoilage = 0
         self.calc_height()
@@ -286,7 +293,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             # Compute overflown cell
             cell_id = self.cell_arena.which_cell(state.pos[0], state.pos[1])
             if cell_id is not None:
-                self.cell_arena.cells[cell_id[0]][cell_id[1]].overfly()
+                self.cell_arena.cells[cell_id[0]][cell_id[1]].overfly(state.pos[2])
 
 
             if SHOW_DIRECTION:
