@@ -145,8 +145,8 @@ class Exploration_Area_Rect():
     
     def id_in_EE(self, idx:int, idy:int):
         '''
+        Method checks if a cell id is in the exploration area. 
         '''
-        
         if (0<=idx<self.nb_cells_x) and (0<=idy<self.nb_cells_y):
             return True
         else:
