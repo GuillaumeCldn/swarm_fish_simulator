@@ -260,11 +260,11 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             for j in range(self.cell_arena.nb_cells_y):
                 cell = self.cell_arena.cells[i][j]
                 if init:
-                    cell.mesh = self.view.build_mesh(vertices=cell.vertices, height=cell.height, color=(0.,1.,1.,1.)) 
+                    cell.mesh = self.view.build_polygon_mesh(vertices=cell.vertices, height=cell.height, color=(0.,1.,1.,1.)) 
                     self.view.add_mesh(cell.mesh)
                 else:
                     old_mesh = cell.mesh
-                    cell.mesh = self.view.build_mesh(vertices=cell.vertices, height=cell.height, color=(0.,1.,1.,1.)) 
+                    cell.mesh = self.view.build_polygon_mesh(vertices=cell.vertices, height=cell.height, color=(0.,1.,1.,1.)) 
                     self.view.update_mesh(old_mesh, cell.mesh)
 
     def measure_spoilage(self):
