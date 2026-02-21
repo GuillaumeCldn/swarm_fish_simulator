@@ -33,7 +33,7 @@ CELL_HMAX = 1.
 ALPHA = CELL_HMAX/MAX_SPOIL # rate at which the cell height is updated
 
 SENSOR_VIEW_HEIGHT = 5 # m, height at which sensor resolution is average
-SENSOR_VIEW_ANGLE = 60 # °, aperture of sensor view cone
+SENSOR_VIEW_ANGLE = 30 # °, aperture of sensor view cone
 
 
 class Cell():
@@ -147,7 +147,7 @@ class Exploration_Area_Rect():
         '''
         '''
         
-        if (0<=idx<=self.nb_cells_x) and (0<=idy<=self.nb_cells_y):
+        if (0<=idx<self.nb_cells_x) and (0<=idy<self.nb_cells_y):
             return True
         else:
             return False
@@ -163,7 +163,8 @@ class Exploration_Area_Rect():
         Method returns list of ids (tuple(idx, idy)) of cells which are in the drone's sensor fov.
         '''
         cells = []
-        view_radius = z*math.tan((SENSOR_VIEW_ANGLE/2)*np.pi/180)
+        view_radius = z*math.tan((SENSOR_VIEW_ANGLE/2.)*np.pi/180.)
+        print(f"Drone altitude: {z:.2f} m, view radius: {view_radius:.2f} m")
         cell_count_x = int(view_radius // self.cell_lx) + 1
         cell_count_y = int(view_radius // self.cell_ly) + 1
         # Check if drone is above the exploration area
