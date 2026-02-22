@@ -24,22 +24,26 @@ POS_NOISE = 0.
 SPEED_NOISE = 0. # 0.1
 HEADING_NOISE = 0.
 
-OVFY_PERIOD = 10. # s, minimum duration for overfly to be registered
-SPOIL_TIME = 30. # s, time after which spoilage should start increasing rapidly
+OVFY_PERIOD = 2. # s, minimum duration for overfly to be registered
+SPOIL_TIME = 60. # s, time after which spoilage should start increasing rapidly
 MAX_SPOIL = 100. # maximum spoilage value
-FRESHEN_RATE = MAX_SPOIL/10. # amount by which spoilage is decreased when a cell is overflown
+FRESHEN_RATE = MAX_SPOIL/4. # amount by which spoilage is decreased when a cell is overflown
 
 CELL_HMIN = 0.1
 CELL_HMAX = 1.
 ALPHA = CELL_HMAX/MAX_SPOIL # rate at which the cell height is updated
 
-SENSOR_VIEW_HEIGHT = 5 # m, height at which sensor resolution is average
-SENSOR_VIEW_ANGLE = 30 # °, aperture of sensor view cone
+SENSOR_VIEW_HEIGHT = 10. # m, height at which sensor resolution is average
+SENSOR_VIEW_ANGLE = 60. # °, aperture of sensor view cone
 
 FOV_COLOUR = (0.,0.,1,0.1)
 EE_AREA_COLOUR = (0.,1.,0.,1.)
 ARENA_COLOUR = (1.,0.,0.,1.)
 CELL_COLOUR = (0.,1.,1.,1.)
+
+ARENA_RADIUS = 10. # m
+CELL_LX = CELL_LY = 20. # m
+NB_CELLS_X = NB_CELLS_Y = 20
 
 
 class Cell():
@@ -212,10 +216,11 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         super().__init__(ARGS, env, view)
 
         #### Init SwarmFish ########################################
-        arena_radius = math.sqrt(2)*10.
-        arena_center = np.array([10., 10., 0.])
+        # WARN: If arena is centred, cell behaviour is wrong
+        arena_radius = math.sqrt(2)*ARENA_RADIUS
+        arena_center = np.array([ARENA_RADIUS, ARENA_RADIUS, 0.])
         
-        self.cell_arena = Exploration_Area_Rect(lx=20., ly=20., nb_cells_x=20, nb_cells_y=20)
+        self.cell_arena = Exploration_Area_Rect(lx=CELL_LX, ly=CELL_LY, nb_cells_x=NB_CELLS_X, nb_cells_y=NB_CELLS_Y)
         self.cell_arena.build_cells()
         # TODO: Change drone arena from circle to square
         self.arena = so.Arena(center=arena_center[0:2], radius=arena_radius, name="arena")
