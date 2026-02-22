@@ -24,7 +24,7 @@ POS_NOISE = 0.
 SPEED_NOISE = 0. # 0.1
 HEADING_NOISE = 0.
 
-OVFY_PERIOD = 2. # s, minimum duration for overfly to be registered
+OVFY_PERIOD = 10. # s, minimum duration for overfly to be registered
 SPOIL_TIME = 60. # s, time after which spoilage should start increasing rapidly
 MAX_SPOIL = 100. # maximum spoilage value
 FRESHEN_RATE = MAX_SPOIL/4. # amount by which spoilage is decreased when a cell is overflown
@@ -140,7 +140,7 @@ class Exploration_Area_Rect():
         for i in range(self.nb_cells_x):
             temp_list = []
             for j in range(self.nb_cells_y):
-                temp_list.append(Cell(i, j, self.origin[0]+i*self.cell_lx, self.origin[1]+j*self.cell_ly, self.cell_lx, self.cell_ly, self.init_time))
+                temp_list.append(Cell(i, j, self.origin[0]+i*self.cell_lx, self.origin[1]+j*self.cell_ly, self.cell_lx, self.cell_ly, self.init_time-OVFY_PERIOD))
             self.cells.append(temp_list)
         self.cells = np.array(self.cells)
 
