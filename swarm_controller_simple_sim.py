@@ -129,10 +129,11 @@ class SwamFish_View(QMainWindow):
             meshdata=mesh_data, 
             drawFaces=True,
             drawEdges=False, 
+            edgeColor=color[:3]+(0.,),
             smooth=False, 
             computeNormals=True,
             shader='shaded', 
-            glOptions='opaque'
+            glOptions='translucent'
         )
         mesh.setColor(color)
         mesh.translate(pos[0], pos[1], 0.)
