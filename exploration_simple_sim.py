@@ -14,7 +14,7 @@ import swarmfish.obstacles as so
 
 TEST_OBSTACLE = False
 SHOW_DIRECTION = True
-SHOW_ARENA = True
+SHOW_EE_AREA = True
 SHOW_CELLS = True
 SHOW_FOV = True
 SHOW_INFLUENTIALS = True
@@ -35,6 +35,11 @@ ALPHA = CELL_HMAX/MAX_SPOIL # rate at which the cell height is updated
 
 SENSOR_VIEW_HEIGHT = 5 # m, height at which sensor resolution is average
 SENSOR_VIEW_ANGLE = 30 # °, aperture of sensor view cone
+
+FOV_COLOUR = (0.,0.,1,0.1)
+EE_AREA_COLOUR = (0.,1.,0.,1.)
+ARENA_COLOUR = (1.,0.,0.,1.)
+CELL_COLOUR = (0.,1.,1.,1.)
 
 
 class Cell():
@@ -214,9 +219,9 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         self.cell_arena.build_cells()
         # TODO: Change drone arena from circle to square
         self.arena = so.Arena(center=arena_center[0:2], radius=arena_radius, name="arena")
-        self.view.add_cylinder(radius=arena_radius, height=0.01, pos=arena_center, color=(1.,0.,0.,0.1))
-        if SHOW_ARENA:
-            self.view.add_polygon(vertices=self.cell_arena.vertices, height=0.05, color=(0,1,0,1))
+        self.view.add_cylinder(radius=arena_radius, height=0.01, pos=arena_center, color=ARENA_COLOUR)
+        if SHOW_EE_AREA:
+            self.view.add_polygon(vertices=self.cell_arena.vertices, height=0.05, color=EE_AREA_COLOUR)
         if SHOW_CELLS:
             self.draw_cells(init=True)
 
@@ -266,21 +271,21 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             for j in range(self.cell_arena.nb_cells_y):
                 cell = self.cell_arena.cells[i][j]
                 if init:
-                    cell.mesh = self.view.build_polygon_mesh(vertices=cell.vertices, height=cell.height, color=(0.,1.,1.,1.)) 
+                    cell.mesh = self.view.build_polygon_mesh(vertices=cell.vertices, height=cell.height, color=CELL_COLOUR) 
                     self.view.add_mesh(cell.mesh)
                 else:
                     old_mesh = cell.mesh
-                    cell.mesh = self.view.build_polygon_mesh(vertices=cell.vertices, height=cell.height, color=(0.,1.,1.,1.)) 
+                    cell.mesh = self.view.build_polygon_mesh(vertices=cell.vertices, height=cell.height, color=CELL_COLOUR) 
                     self.view.update_mesh(old_mesh, cell.mesh)
 
     def draw_fov(self, uav_id:int, pos:np.ndarray, init=False):
         view_radius = pos[2]*math.tan((SENSOR_VIEW_ANGLE/2.)*np.pi/180.)
         if init:
-            self.fov_dict[uav_id] = self.view.build_cone_mesh(view_radius, pos, color=(0.,0.,1., 0.1))
+            self.fov_dict[uav_id] = self.view.build_cone_mesh(view_radius, pos, color=FOV_COLOUR)
             self.view.add_mesh(self.fov_dict[uav_id])
         else:
             old_fov = self.fov_dict[uav_id]
-            self.fov_dict[uav_id] = self.view.build_cone_mesh(view_radius, pos, color=(0.,0.,1., 0.1))
+            self.fov_dict[uav_id] = self.view.build_cone_mesh(view_radius, pos, color=FOV_COLOUR)
             self.view.update_mesh(old_fov, self.fov_dict[uav_id])
 
     def measure_spoilage(self):
