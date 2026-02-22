@@ -118,12 +118,12 @@ class SwamFish_View(QMainWindow):
         mesh.setColor(color)
         return mesh
 
-    def build_cone_mesh(self, radius:float, height:float, pos:np.ndarray, res:int = 20, color=(1., 1., 1., 1.)):
+    def build_cone_mesh(self, radius:float, pos:np.ndarray, res:int = 20, color=(1., 1., 1., 1.)):
         """
         Creates a cone by generating a cylinder with a top radius of 0.
         """
         # radius=[bottom_radius, top_radius]
-        mesh_data = gl.MeshData.cylinder(rows=1, cols=res, radius=[radius, 0.0], length=height)
+        mesh_data = gl.MeshData.cylinder(rows=1, cols=res, radius=[radius, 0.0], length=pos[2])
 
         mesh = gl.GLMeshItem(
             meshdata=mesh_data, 

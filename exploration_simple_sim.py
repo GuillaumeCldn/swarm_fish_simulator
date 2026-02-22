@@ -16,6 +16,7 @@ TEST_OBSTACLE = False
 SHOW_DIRECTION = True
 SHOW_ARENA = True
 SHOW_CELLS = True
+SHOW_FOV = True
 SHOW_INFLUENTIALS = True
 NB_INFLUENTIAL = 1
 
@@ -23,7 +24,7 @@ POS_NOISE = 0.
 SPEED_NOISE = 0. # 0.1
 HEADING_NOISE = 0.
 
-OVFY_PERIOD = 10. # s, minimum duration for overlfy to be registered
+OVFY_PERIOD = 10. # s, minimum duration for overfly to be registered
 SPOIL_TIME = 30. # s, time after which spoilage should start increasing rapidly
 MAX_SPOIL = 100. # maximum spoilage value
 FRESHEN_RATE = MAX_SPOIL/10. # amount by which spoilage is decreased when a cell is overflown
@@ -219,6 +220,11 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         if SHOW_CELLS:
             self.draw_cells(init=True)
 
+        if SHOW_FOV:
+            self.fov_dict = {}
+            for d in range(env.num_drones):
+                self.draw_fov(uav_id=d, pos=np.array([0., 0., 0.]), init=True)
+                
         #init_yaw = [ self.obs[j].att[2] for j in range(self.num_drones) ]
         #self.desired_course = np.array(init_yaw) # np.zeros(self.num_drones)
 
@@ -267,6 +273,16 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                     cell.mesh = self.view.build_polygon_mesh(vertices=cell.vertices, height=cell.height, color=(0.,1.,1.,1.)) 
                     self.view.update_mesh(old_mesh, cell.mesh)
 
+    def draw_fov(self, uav_id:int, pos:np.ndarray, init=False):
+        view_radius = pos[2]*math.tan((SENSOR_VIEW_ANGLE/2.)*np.pi/180.)
+        if init:
+            self.fov_dict[uav_id] = self.view.build_cone_mesh(view_radius, pos, color=(0.,0.,1., 0.1))
+            self.view.add_mesh(self.fov_dict[uav_id])
+        else:
+            old_fov = self.fov_dict[uav_id]
+            self.fov_dict[uav_id] = self.view.build_cone_mesh(view_radius, pos, color=(0.,0.,1., 0.1))
+            self.view.update_mesh(old_fov, self.fov_dict[uav_id])
+
     def measure_spoilage(self):
         '''
         Method calculates the normalised spoilage of all cells in the exploration arena.
@@ -299,7 +315,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             '''
             If you need : obs[str(j)]["state"] include jth vehicle's
             position [0:3]  quaternion [3:7]   Attitude[7:10]  VelocityInertialFrame[10:13]     qpr[13:16]   motors[16:20]
-            X  Y  Z         Q1   Q2   Q3  Q4   R  P   Y        VX     VY    VZ                  WX WY WZ     P0 P1 P2 P3
+            X  Y  Z         Q1   Q2   Q3  Q4   R  P  Y         VX     VY     VZ                 WX WY WZ     P0 P1 P2 P3
             '''
             #uav_name = str(uav_id)
             state = states[uav_id]
@@ -349,13 +365,11 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                 for d, s in zip(self.directions[uav_id], self.speeds[uav_id]):
                     self.view.move_line(d, state.pos, state.pos+speed[0:3])
                     self.view.move_line(s, state.pos, state.pos+state.speed)
-    
-            #print(state)
-            #print(f' wall {uav_id} | dist {wall[0]:.2f}, angle= {np.degrees(wall[1]):.2f}')
-            #print(f' cmd {uav_id} | {np.degrees(cmd.delta_course):0.2f}, {cmd.delta_speed:0.3f}, {cmd.delta_vz:0.3f} | desired_course {np.degrees(desired_course):0.2f}')
-            #print(' speed',uav_id,speed)
-        #print('') # blank line
-        print(f"Minimum spoilage = {self.cell_arena.min_spoilage*100:.2f}, current spoilage = {self.measure_spoilage()*100:.2f}%")
+
+            if SHOW_FOV:
+                self.draw_fov(uav_id, state.pos)
+
+            print(f"Minimum spoilage = {self.cell_arena.min_spoilage*100:.2f}, current spoilage = {self.measure_spoilage()*100:.2f}%")
 
 
 if __name__ == "__main__":
