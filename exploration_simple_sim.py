@@ -300,8 +300,6 @@ class SwarmFish_Scenario(SwarmFish_Controller):
 
     def update_action(self):
         #### Step the simulation ###################################
-        # WARN: The simulation is starting to slow.
-
         self.draw_cells()
         noise = np.random.normal(size=7)
         states = { j: sc.State(
@@ -358,6 +356,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             if cells is not None:
                 for cell_id in cells:
                     if cell_id is not None:
+                        # WARN: Some cells seem to be drawn as overflown late
                         self.cell_arena.cells[cell_id[0]][cell_id[1]].overfly(state.pos[2])
 
 
