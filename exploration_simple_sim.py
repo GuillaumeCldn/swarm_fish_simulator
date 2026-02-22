@@ -61,14 +61,14 @@ class Cell():
     def __repr__(self) -> str:
         return f"Id: {self.id}, position: ({self.position}), size: ({self.size}), spoilage: {self.spoilage}"
 
-    def calc_height(self):
+    def calc_height(self) -> None:
         '''
         Method updates the height of the cell proportionally to the spoilage.
         Cell height is constrained by CELL_HMIN and CELL_HMAX. 
         '''
         self.height = min(CELL_HMIN, CELL_HMAX - ALPHA*self.spoilage)
 
-    def overfly(self, drone_height:float):
+    def overfly(self, drone_height:float) -> None:
         '''
         Method updates the time of last overfly of the cells and calls the freshen() method. 
         '''
@@ -79,7 +79,7 @@ class Cell():
 
     # WARN: Spoilage rate climbs to fast
     # TODO: Find better function to update spoilage rate
-    def spoil(self):
+    def spoil(self) -> None:
         '''
         Method increases cell spoilage exponentially over time until spoilage reaches MAX_SPOIL.
         '''
@@ -90,7 +90,7 @@ class Cell():
             self.spoilage = MAX_SPOIL
         self.calc_height()
 
-    def freshen(self, drone_height:float):
+    def freshen(self, drone_height:float) -> None:
         '''
         Method decreases spoilage, thus "freshening" the cell.
         To model data precision, the amount by which spoilage is decreased depends on the drone height.
@@ -128,7 +128,7 @@ class Exploration_Area_Rect():
     def __repr__(self) -> str:
         return f"Size: {self.total_size}, origin: {self.origin}, #cells: {self.nb_cells}"
 
-    def build_cells(self):
+    def build_cells(self) -> None:
         '''
         Method populates self.cells with grid of cells.
         '''
@@ -140,7 +140,7 @@ class Exploration_Area_Rect():
             self.cells.append(temp_list)
         self.cells = np.array(self.cells)
 
-    def in_EE(self, x:float, y:float):
+    def in_EE(self, x:float, y:float) -> bool:
         '''
         Method checks if coordinates are in the exploration area. 
         '''
@@ -149,7 +149,7 @@ class Exploration_Area_Rect():
         else:
             return False
     
-    def id_in_EE(self, idx:int, idy:int):
+    def id_in_EE(self, idx:int, idy:int) -> bool:
         '''
         Method checks if a cell id is in the exploration area. 
         '''
@@ -158,15 +158,15 @@ class Exploration_Area_Rect():
         else:
             return False
 
-    def coords_to_id(self, x:float, y:float):
+    def coords_to_id(self, x:float, y:float) -> tuple[int, int]:
         '''
         Method returns the id of the cell which contains coordinates x and y.
         '''
         return (int(x//self.cell_lx), int(y//self.cell_ly))
 
-    def which_cells(self, x:float, y:float, z: float): 
+    def which_cells(self, x:float, y:float, z: float) -> list[tuple[int, int]] | None: 
         '''
-        Method returns list of ids (tuple(idx, idy)) of cells which are in the drone's sensor fov.
+        Method returns list of ids of cells which are in the drone's sensor fov.
         '''
         cells = []
         view_radius = z*math.tan(np.radians(SENSOR_VIEW_ANGLE/2.))
@@ -197,7 +197,7 @@ class Exploration_Area_Rect():
             return None
         return cells
 
-    def spoil_cells(self):
+    def spoil_cells(self) -> None:
         '''
         Method spoils each cell in the arena.
         '''
@@ -261,7 +261,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         if start:
             self.start_simulation()
 
-    def draw_cells(self, init=False):
+    def draw_cells(self, init:bool=False) -> None:
         '''
         Method draws each cell in the arena.
         By default, the method updates already drawn cells.
@@ -278,7 +278,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                     cell.mesh = self.view.build_polygon_mesh(vertices=cell.vertices, height=cell.height, color=CELL_COLOUR) 
                     self.view.update_mesh(old_mesh, cell.mesh)
 
-    def draw_fov(self, uav_id:int, pos:np.ndarray, init=False):
+    def draw_fov(self, uav_id:int, pos:np.ndarray, init:bool=False) -> None:
         view_radius = pos[2]*math.tan(np.radians(SENSOR_VIEW_ANGLE/2.))
         if init:
             self.fov_dict[uav_id] = self.view.build_cone_mesh(view_radius, pos, color=FOV_COLOUR)
@@ -288,7 +288,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             self.fov_dict[uav_id] = self.view.build_cone_mesh(view_radius, pos, color=FOV_COLOUR)
             self.view.update_mesh(old_fov, self.fov_dict[uav_id])
 
-    def measure_spoilage(self):
+    def measure_spoilage(self) -> float:
         '''
         Method calculates the normalised spoilage of all cells in the exploration arena.
         '''
