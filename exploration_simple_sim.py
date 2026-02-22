@@ -169,7 +169,7 @@ class Exploration_Area_Rect():
         Method returns list of ids (tuple(idx, idy)) of cells which are in the drone's sensor fov.
         '''
         cells = []
-        view_radius = z*math.tan((SENSOR_VIEW_ANGLE/2.)*np.pi/180.)
+        view_radius = z*math.tan(np.radians(SENSOR_VIEW_ANGLE/2.))
         cell_count_x = int(view_radius // self.cell_lx)
         cell_count_y = int(view_radius // self.cell_ly)
         # Check if drone is above the exploration area
@@ -279,7 +279,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                     self.view.update_mesh(old_mesh, cell.mesh)
 
     def draw_fov(self, uav_id:int, pos:np.ndarray, init=False):
-        view_radius = pos[2]*math.tan((SENSOR_VIEW_ANGLE/2.)*np.pi/180.)
+        view_radius = pos[2]*math.tan(np.radians(SENSOR_VIEW_ANGLE/2.))
         if init:
             self.fov_dict[uav_id] = self.view.build_cone_mesh(view_radius, pos, color=FOV_COLOUR)
             self.view.add_mesh(self.fov_dict[uav_id])
