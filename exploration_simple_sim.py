@@ -164,9 +164,8 @@ class Exploration_Area_Rect():
         '''
         cells = []
         view_radius = z*math.tan((SENSOR_VIEW_ANGLE/2.)*np.pi/180.)
-        print(f"Drone altitude: {z:.2f} m, view radius: {view_radius:.2f} m")
-        cell_count_x = int(view_radius // self.cell_lx) + 1
-        cell_count_y = int(view_radius // self.cell_ly) + 1
+        cell_count_x = int(view_radius // self.cell_lx)
+        cell_count_y = int(view_radius // self.cell_ly)
         # Check if drone is above the exploration area
         if self.in_EE(x, y):
                 idx_0, idy_0 = self.coords_to_id(x, y)
@@ -179,10 +178,11 @@ class Exploration_Area_Rect():
                             if self.id_in_EE(idx_0+i, idy_0+j):
                                 cells.append((idx_0+i, idy_0+j))
                 # Test if corner cells are in fov
-                for k in range(-1, 2):
-                    for l in range(-1, 2):
-                        if self.in_EE(x+k*view_radius, y+l*view_radius): 
-                            corner_candidate = self.coords_to_id(x+k*view_radius, y+l*view_radius)
+                corner_coord = math.sqrt(2)/2.*view_radius
+                for k in range(-1, 2, 2):
+                    for l in range(-1, 2, 2):
+                        if self.in_EE(x+k*corner_coord, y+l*corner_coord): 
+                            corner_candidate = self.coords_to_id(x+k*corner_coord, y+l*corner_coord)
                             if corner_candidate not in cells:
                                 cells.append(corner_candidate)
                             else:
