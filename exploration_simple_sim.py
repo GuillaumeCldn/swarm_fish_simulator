@@ -42,7 +42,7 @@ ARENA_COLOUR = (1.,0.,0.,1.)
 CELL_COLOUR = (0.,1.,1.,1.)
 
 ARENA_RADIUS = 10. # m
-CELL_LX = CELL_LY = 20. # m
+EE_AREA_LX = EE_AREA_LY = 20. # m
 NB_CELLS_X = NB_CELLS_Y = 20
 
 
@@ -220,7 +220,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         arena_radius = math.sqrt(2)*ARENA_RADIUS
         arena_center = np.array([ARENA_RADIUS, ARENA_RADIUS, 0.])
         
-        self.cell_arena = Exploration_Area_Rect(lx=CELL_LX, ly=CELL_LY, nb_cells_x=NB_CELLS_X, nb_cells_y=NB_CELLS_Y)
+        self.cell_arena = Exploration_Area_Rect(lx=EE_AREA_LX, ly=EE_AREA_LY, nb_cells_x=NB_CELLS_X, nb_cells_y=NB_CELLS_Y)
         self.cell_arena.build_cells()
         # TODO: Change drone arena from circle to square
         self.arena = so.Arena(center=arena_center[0:2], radius=arena_radius, name="arena")
