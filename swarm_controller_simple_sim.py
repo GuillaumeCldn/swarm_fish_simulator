@@ -234,12 +234,12 @@ class SwarmFish_Controller(QWidget, Ui_SwarmController):
     def start_simulation(self):
         self.action_timer.start(ms_of_hz(self.simulation_freq_hz))
         self.simulation_timer.start(ms_of_hz(self.simulation_freq_hz))
-        print("simultion started")
+        print("Simulation started")
 
     def stop_simulation(self):
         self.simulation_timer.stop()
         self.action_timer.stop()
-        print("simultion stoped")
+        print("Simulation stopped")
 
     def close(self):
         print("Closing controller")
