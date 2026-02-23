@@ -310,7 +310,8 @@ class SwarmFish_Scenario(SwarmFish_Controller):
 
     def update_action(self):
         #### Step the simulation ###################################
-        self.draw_cells()
+        if SHOW_CELLS:
+            self.draw_cells()
         noise = np.random.normal(size=7)
         states = { j: sc.State(
             self.obs[j].pos + POS_NOISE*noise[0:3],
