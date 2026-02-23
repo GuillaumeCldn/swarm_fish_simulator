@@ -1,45 +1,70 @@
-"""Script for testing swarmfish with quadrotors following a desired velocity vector (unit vector + magnitude normalized by max vehicle speed in Km/h)
-"""
-import sys
-import os
+"""Script for testing swarmfish with quadrotors following a desired velocity vector (unit vector + magnitude normalized by max vehicle speed in Km/h)"""
+
 import argparse
+import math
+import os
+import sys
 import time
 from datetime import datetime
+
 import numpy as np
-import math
+import swarmfish.swarm_control as sc
+from swarmfish.utils import compute_quantification, load_params_from_yaml
 
 from simple_sim.point_sim import PointSim, QuadrotorState
-from swarm_controller_simple_sim import SwarmFish_Environment, ms_of_hz, make_args_parser
+from swarm_controller_simple_sim import (
+    SwarmFish_Environment,
+    make_args_parser,
+    ms_of_hz,
+)
 from utils.util_logger import Logger
 
-from swarmfish.utils import load_params_from_yaml, compute_quantification
-import swarmfish.swarm_control as sc
+
+class Args(argparse.Namespace):
+    drone: list[str]
+    num_drones: int
+    gui: bool
+    record_video: bool
+    simulation_freq_hz: int
+    control_freq_hz: int
+    swarm_config: str
+    random_init: bool
 
 
 def run_simulation(ARGS: dict):
     #### Initialize the simulation #############################
-    time_step = 1. / float(ARGS.simulation_freq_hz)
+    time_step = 1.0 / float(ARGS.simulation_freq_hz)
     dim = math.ceil(math.sqrt(ARGS.num_drones))
-    dist = 2.
+    dist = 2.0
 
-    init_state = np.array([[ dist*(i % dim), dist*math.floor(i / dim), 0., 0. ] for i in range(ARGS.num_drones)]) 
+    init_state = np.array(
+        [
+            [dist * (i % dim), dist * math.floor(i / dim), 0.0, 0.0]
+            for i in range(ARGS.num_drones)
+        ]
+    )
     if ARGS.random_init:
-        init_state[:,3] = 2.*np.pi*np.random.rand(ARGS.num_drones)
+        init_state[:, 3] = 2.0 * np.pi * np.random.rand(ARGS.num_drones)
 
-    NOISES = [ np.radians(0.2), 0.01, 0.05 ] # noise on heading, speed and vertical speed (standard deviation of a normal distribution)
+    NOISES = [
+        np.radians(0.2),
+        0.01,
+        0.05,
+    ]  # noise on heading, speed and vertical speed (standard deviation of a normal distribution)
 
     #### Create the environment
-    sim = [ PointSim(init_position=x0[0:3], init_yaw=x0[3]) for x0 in init_state ]
+    sim = [PointSim(init_position=x0[0:3], init_yaw=x0[3]) for x0 in init_state]
 
     def get_states():
-        return [ sim[i].get_state() for i in range(ARGS.num_drones) ]
+        return [sim[i].get_state() for i in range(ARGS.num_drones)]
 
     def step(commands):
         for i in range(ARGS.num_drones):
             sim[i].update_state(
-                    desired_velocity=commands[i][0:3],
-                    desired_yaw_rate=commands[i][3],
-                    time_step=time_step)
+                desired_velocity=commands[i][0:3],
+                desired_yaw_rate=commands[i][3],
+                time_step=time_step,
+            )
         return get_states()
 
     #### Initialize the logger #################################
@@ -47,14 +72,14 @@ def run_simulation(ARGS: dict):
         logging_freq_hz=int(ARGS.log_freq_hz),
         num_drones=ARGS.num_drones,
         duration_sec=int(ARGS.duration_sec),
-        control_length=4
+        control_length=4,
     )
     LOG_EVERY_N_STEPS = int(np.floor(ARGS.simulation_freq_hz / ARGS.log_freq_hz))
 
     #### Initialize the controllers ############################
-    commands = [ np.zeros(4) for i in range(ARGS.num_drones) ]
+    commands = [np.zeros(4) for i in range(ARGS.num_drones)]
     speed_setpoint = ARGS.speed_setpoint
-    obs = step(commands) # initial observation
+    obs = step(commands)  # initial observation
 
     #### Init SwarmFish ########################################
     params = load_params_from_yaml(ARGS.swarm_config)
@@ -66,77 +91,129 @@ def run_simulation(ARGS: dict):
     #### Run the simulation ####################################
     START = time.time()
     for i in range(0, int(ARGS.duration_sec * ARGS.simulation_freq_hz)):
-
         #### Step the simulation ###############################
         obs = step(commands)
 
-        states = { j: sc.State(
-            obs[j].pos,
-            obs[j].vel,
-            obs[j].att[2],
-            float(i / ARGS.simulation_freq_hz))
-            for j in range(ARGS.num_drones) }
+        states = {
+            j: sc.State(
+                obs[j].pos,
+                obs[j].vel,
+                obs[j].att[2],
+                float(i / ARGS.simulation_freq_hz),
+            )
+            for j in range(ARGS.num_drones)
+        }
         #### Compute control for the current state #############
         for uav_id in range(ARGS.num_drones):
             uav_name = str(uav_id)
             state = states[uav_id]
-            neighbors = [ states[k] for k in range(ARGS.num_drones) if k != uav_id ]
-            cmd, influentials = sc.compute_interactions(state, params,
-                    neighbors,
-                    nb_influent=2,
-                    wall=None,
-                    altitude=None, z_min = 4., z_max = 8.,
-                    direction=None)
-            noise = np.random.normal(0., NOISES)
+            neighbors = [states[k] for k in range(ARGS.num_drones) if k != uav_id]
+            cmd, influentials = sc.compute_interactions(
+                state,
+                params,
+                neighbors,
+                nb_influent=2,
+                wall=None,
+                altitude=None,
+                z_min=4.0,
+                z_max=8.0,
+                direction=None,
+            )
+            noise = np.random.normal(0.0, NOISES)
             yaw_rate = cmd.delta_course + noise[0]
-            velocity = speed_setpoint + cmd.delta_speed + noise[1] # TODO clip min/max
+            velocity = speed_setpoint + cmd.delta_speed + noise[1]  # TODO clip min/max
             vz = cmd.delta_vz + noise[2]
-            speed = np.array([
-                velocity * math.cos(state.get_course(use_heading=True)),
-                velocity * math.sin(state.get_course(use_heading=True)),
-                vz,
-                yaw_rate])
+            speed = np.array(
+                [
+                    velocity * math.cos(state.get_course(use_heading=True)),
+                    velocity * math.sin(state.get_course(use_heading=True)),
+                    vz,
+                    yaw_rate,
+                ]
+            )
             commands[uav_id] = speed
 
         #### Log the simulation ####################################
         if i % LOG_EVERY_N_STEPS == 0:
             for j in range(ARGS.num_drones):
-                logger.log(drone=j,
-                           timestamp=i/ARGS.simulation_freq_hz,
-                           state=sim[j].as_ndarray(),
-                           control=commands[j]
-                           )
+                logger.log(
+                    drone=j,
+                    timestamp=i / ARGS.simulation_freq_hz,
+                    state=sim[j].as_ndarray(),
+                    control=commands[j],
+                )
 
     #### Save the simulation results ###########################
     if ARGS.save_quant:
-        quant = compute_quantification(logger.get_positions(), logger.get_velocities(), int(logger.nb_steps * 0.2))
-        file_name = os.path.join(ARGS.log_file_path, 'quant_'+ARGS.log_name+'.txt')
-        #np.savez(file_name, quant=quant)
-        np.savetxt(file_name, quant.reshape((1,6)))
+        quant = compute_quantification(
+            logger.get_positions(), logger.get_velocities(), int(logger.nb_steps * 0.2)
+        )
+        file_name = os.path.join(ARGS.log_file_path, "quant_" + ARGS.log_name + ".txt")
+        # np.savez(file_name, quant=quant)
+        np.savetxt(file_name, quant.reshape((1, 6)))
     else:
         logger.save(file_path=ARGS.log_file_path, file_name=ARGS.log_name)
 
-    return f'{ARGS.log_file_path}{ARGS.log_name} done'
+    return f"{ARGS.log_file_path}{ARGS.log_name} done"
+
 
 if __name__ == "__main__":
     #### Define and parse (optional) arguments for the script ##
     parser = argparse.ArgumentParser(
         description="Phase diagram simulation",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--num_drones", default=5, type=int, help="Number of drones", metavar="")
-    parser.add_argument("--speed_setpoint", default=1., type=float, help="speed setpoint", metavar="")
-    parser.add_argument("--simulation_freq_hz", default=20, type=int, help="Simulation frequency in Hz", metavar="")
-    parser.add_argument("--log_freq_hz", default=10, type=int, help="Log frequency in Hz", metavar="")
-    parser.add_argument("--log_name", default=None, type=str, help="Log file name", metavar="")
-    parser.add_argument("--log_file_path", default='logs/', type=str, help="Log file path", metavar="")
-    parser.add_argument("--duration_sec", default=20, type=int, help="Duration of the simulation in seconds", metavar="")
-    parser.add_argument("--swarm_config", default='config/demo.yaml', type=str, help="SwarmFish parameter file", metavar="")
-    parser.add_argument("--random_init", action='store_true', help="Randomize init (heading only)")
-    parser.add_argument("--y_att", default=0.5, type=float, help="attraction coefficient", metavar="")
-    parser.add_argument("--y_ali", default=0.5, type=float, help="aligment coefficient", metavar="")
-    parser.add_argument("--save_quant", action='store_true', help="Save quantification instead of full log")
-    ARGS = parser.parse_args()
+    parser.add_argument(
+        "--num_drones", default=5, type=int, help="Number of drones", metavar=""
+    )
+    parser.add_argument(
+        "--speed_setpoint", default=1.0, type=float, help="speed setpoint", metavar=""
+    )
+    parser.add_argument(
+        "--simulation_freq_hz",
+        default=20,
+        type=int,
+        help="Simulation frequency in Hz",
+        metavar="",
+    )
+    parser.add_argument(
+        "--log_freq_hz", default=10, type=int, help="Log frequency in Hz", metavar=""
+    )
+    parser.add_argument(
+        "--log_name", default=None, type=str, help="Log file name", metavar=""
+    )
+    parser.add_argument(
+        "--log_file_path", default="logs/", type=str, help="Log file path", metavar=""
+    )
+    parser.add_argument(
+        "--duration_sec",
+        default=20,
+        type=int,
+        help="Duration of the simulation in seconds",
+        metavar="",
+    )
+    parser.add_argument(
+        "--swarm_config",
+        default="config/demo.yaml",
+        type=str,
+        help="SwarmFish parameter file",
+        metavar="",
+    )
+    parser.add_argument(
+        "--random_init", action="store_true", help="Randomize init (heading only)"
+    )
+    parser.add_argument(
+        "--y_att", default=0.5, type=float, help="attraction coefficient", metavar=""
+    )
+    parser.add_argument(
+        "--y_ali", default=0.5, type=float, help="aligment coefficient", metavar=""
+    )
+    parser.add_argument(
+        "--save_quant",
+        action="store_true",
+        help="Save quantification instead of full log",
+    )
+    ARGS = parser.parse_args(namespace=Args())
 
     try:
         run_simulation(ARGS)

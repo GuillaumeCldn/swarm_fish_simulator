@@ -15,8 +15,8 @@ import swarmfish.obstacles as so
 TEST_OBSTACLE = False
 SHOW_DIRECTION = True
 SHOW_EE_AREA = True
-SHOW_CELLS = True
-SHOW_FOV = True
+SHOW_CELLS = False
+SHOW_FOV = False
 SHOW_INFLUENTIALS = True
 NB_INFLUENTIAL = 1
 
@@ -41,9 +41,9 @@ EE_AREA_COLOUR = (0.,1.,0.,1.)
 ARENA_COLOUR = (1.,0.,0.,1.)
 CELL_COLOUR = (0.,1.,1.,1.)
 
-ARENA_RADIUS = 10. # m
-EE_AREA_LX = EE_AREA_LY = 20. # m
-NB_CELLS_X = NB_CELLS_Y = 20
+ARENA_RADIUS = 100. # m
+EE_AREA_LX = EE_AREA_LY = 200. # m
+NB_CELLS_X = NB_CELLS_Y = 200
 
 
 class Cell():
@@ -379,7 +379,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             if SHOW_FOV:
                 self.draw_fov(uav_id, state.pos)
 
-            print(f"Minimum spoilage = {self.cell_arena.min_spoilage*100:.2f}, current spoilage = {self.measure_spoilage()*100:.2f}%")
+        print(f"Minimum spoilage = {self.cell_arena.min_spoilage*100:.2f}, current spoilage = {self.measure_spoilage()*100:.2f}%")
 
 
 if __name__ == "__main__":
