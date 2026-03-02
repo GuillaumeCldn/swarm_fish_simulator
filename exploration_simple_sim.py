@@ -15,8 +15,8 @@ import swarmfish.obstacles as so
 TEST_OBSTACLE = False
 SHOW_DIRECTION = True
 SHOW_EE_AREA = True
-SHOW_CELLS = False
-SHOW_FOV = False
+SHOW_CELLS = True
+SHOW_FOV = True
 SHOW_INFLUENTIALS = True
 NB_INFLUENTIAL = 1
 
@@ -25,8 +25,9 @@ SPEED_NOISE = 0. # 0.1
 HEADING_NOISE = 0.
 
 OVFY_PERIOD = 10. # s, minimum duration for overfly to be registered
-SPOIL_TIME = 60. # s, time after which spoilage should start increasing rapidly
-MAX_SPOIL = 100. # maximum spoilage value
+SPOIL_DELAY = 60. # s, time after which spoilage should start increasing rapidly
+SPOIL_RATE = 10. # s, rate at which spoilage increases
+MAX_SPOIL = 1000. # maximum spoilage value
 FRESHEN_RATE = MAX_SPOIL/4. # amount by which spoilage is decreased when a cell is overflown
 
 CELL_HMIN = 0.1
@@ -41,9 +42,9 @@ EE_AREA_COLOUR = (0.,1.,0.,1.)
 ARENA_COLOUR = (1.,0.,0.,1.)
 CELL_COLOUR = (0.,1.,1.,1.)
 
-ARENA_RADIUS = 100. # m
-EE_AREA_LX = EE_AREA_LY = 200. # m
-NB_CELLS_X = NB_CELLS_Y = 200
+ARENA_RADIUS = 10. # m
+EE_AREA_LX = EE_AREA_LY = 20. # m
+NB_CELLS_X = NB_CELLS_Y = 20
 
 
 class Cell():
@@ -81,13 +82,11 @@ class Cell():
                 self.last_ovfy_time = time.time() # reset time since last overfly
                 self.freshen(drone_height)
 
-    # WARN: Spoilage rate climbs to fast
-    # TODO: Find better function to update spoilage rate
     def spoil(self) -> None:
         '''
         Method increases cell spoilage exponentially over time until spoilage reaches MAX_SPOIL.
         '''
-        spoil_increase = math.exp(time.time()-self.last_ovfy_time-SPOIL_TIME)
+        spoil_increase = math.exp((time.time()-self.last_ovfy_time-SPOIL_DELAY)/SPOIL_RATE)
         if self.spoilage + spoil_increase < MAX_SPOIL:
             self.spoilage += spoil_increase
         else:
