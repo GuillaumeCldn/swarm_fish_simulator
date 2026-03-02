@@ -30,8 +30,8 @@ SPOIL_RATE = 10. # s, rate at which spoilage increases
 MAX_SPOIL = 1000. # maximum spoilage value
 FRESHEN_RATE = MAX_SPOIL/4. # amount by which spoilage is decreased when a cell is overflown
 
-CELL_HMIN = 0.1
-CELL_HMAX = 1.
+CELL_HMIN = 0.1 # m
+CELL_HMAX = 1. # m
 ALPHA = CELL_HMAX/MAX_SPOIL # rate at which the cell height is updated
 
 SENSOR_VIEW_HEIGHT = 10. # m, height at which sensor resolution is average
