@@ -325,7 +325,6 @@ class SwarmFish_Scenario(SwarmFish_Controller):
             position [0:3]  quaternion [3:7]   Attitude[7:10]  VelocityInertialFrame[10:13]     qpr[13:16]   motors[16:20]
             X  Y  Z         Q1   Q2   Q3  Q4   R  P  Y         VX     VY     VZ                 WX WY WZ     P0 P1 P2 P3
             '''
-            #uav_name = str(uav_id)
             state = states[uav_id]
             wall = self.arena.get_wall(state, self.params)
             obstacles = []
@@ -344,14 +343,9 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                 if SHOW_INFLUENTIALS:
                     for l, influential in zip(self.lines[uav_id], influentials):
                         self.view.move_line(l, state.pos, states[int(influential[1])].pos)
-            #desired_course = sc.wrap_to_pi(state.get_course() + cmd.delta_course)
-            #self.desired_course[uav_id] = sc.wrap_to_pi(self.desired_course[uav_id] + cmd.delta_course / self.simulation_freq_hz)
-            #desired_course = self.desired_course[uav_id] + 0.1*np.random.rand()
             yaw_rate = cmd.delta_course #/ self.simulation_freq_hz
-            #print(uav_id, yaw_rate)
-            #print(f'desired course {uav_name}: {np.degrees(desired_course):0.2f} | {np.degrees(state.get_course()):0.2f} + {np.degrees(cmd.delta_course):0.2f}')
-            # TODO fix heading/rates
-            magnitude = self.speed_setpoint + cmd.delta_speed # TODO clip min/max
+            # TODO: fix heading/rates
+            magnitude = self.speed_setpoint + cmd.delta_speed # TODO: clip min/max
             if uav_id in self.intruders_id:
                 magnitude *= 2.
             speed = np.array([
@@ -383,7 +377,7 @@ class SwarmFish_Scenario(SwarmFish_Controller):
 
 if __name__ == "__main__":
 
-    # TODO: Display spoilage measurement.
+    # TODO: Display spoilage measurement graphically
     parser = make_args_parser()
     args = parser.parse_args()
     env = SwarmFish_Environment(args)
