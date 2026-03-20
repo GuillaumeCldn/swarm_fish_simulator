@@ -14,7 +14,7 @@ import swarmfish.obstacles as so
 
 TEST_OBSTACLE = False
 SHOW_DIRECTION = True
-SHOW_EE_AREA = True
+SHOW_EX_AREA = True
 SHOW_CELLS = True
 SHOW_FOV = True
 SHOW_INFLUENTIALS = True
@@ -38,12 +38,12 @@ SENSOR_VIEW_HEIGHT = 10. # m, height at which sensor resolution is average
 SENSOR_VIEW_ANGLE = 60. # °, aperture of sensor view cone
 
 FOV_COLOUR = (0.,0.,1,0.1)
-EE_AREA_COLOUR = (0.,1.,0.,1.)
+EX_AREA_COLOUR = (0.,1.,0.,1.)
 ARENA_COLOUR = (1.,0.,0.,1.)
 CELL_COLOUR = (0.,1.,1.,1.)
 
 ARENA_RADIUS = 10. # m
-EE_AREA_LX = EE_AREA_LY = 20. # m
+EX_AREA_LX = EX_AREA_LY = 20. # m
 NB_CELLS_X = NB_CELLS_Y = 20
 
 
@@ -219,13 +219,13 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         arena_radius = math.sqrt(2)*ARENA_RADIUS
         arena_center = np.array([ARENA_RADIUS, ARENA_RADIUS, 0.])
         
-        self.cell_arena = Exploration_Area_Rect(lx=EE_AREA_LX, ly=EE_AREA_LY, nb_cells_x=NB_CELLS_X, nb_cells_y=NB_CELLS_Y)
+        self.cell_arena = Exploration_Area_Rect(lx=EX_AREA_LX, ly=EX_AREA_LY, nb_cells_x=NB_CELLS_X, nb_cells_y=NB_CELLS_Y)
         self.cell_arena.build_cells()
         # TODO: Change drone arena from circle to square
         self.arena = so.Arena(center=arena_center[0:2], radius=arena_radius, name="arena")
         self.view.add_cylinder(radius=arena_radius, height=0.01, pos=arena_center, color=ARENA_COLOUR)
-        if SHOW_EE_AREA:
-            self.view.add_polygon(vertices=self.cell_arena.vertices, height=0.05, color=EE_AREA_COLOUR)
+        if SHOW_EX_AREA:
+            self.view.add_polygon(vertices=self.cell_arena.vertices, height=0.05, color=EX_AREA_COLOUR)
         if SHOW_CELLS:
             self.draw_cells(init=True)
 
