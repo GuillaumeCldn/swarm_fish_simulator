@@ -343,7 +343,8 @@ def make_args_parser():
     parser = argparse.ArgumentParser(description="SwarmFish control with Qt")
     parser.add_argument("--num_drones", default=NB_OF_DRONES, type=int, help="Number of drones")
     parser.add_argument("--simulation_freq_hz", default=SIMULATION_FREQ, type=int, help="Simulation frequency in Hz")
-    parser.add_argument("--swarm_config", default='config/demo.yaml', type=str, help="SwarmFish parameter file")
+    parser.add_argument("--swarm_config", default='config/swarm/demo_swarm.yaml', type=str, help="SwarmFish parameter file")
+    # parser.add_argument("--ex_area_config", default='config/ex_area/demo_ex_area.yaml', type=str, help="Exploration Area parameter file")
     parser.add_argument("--mesh_file", default='models/triangle.stl', type=str, help="STL drone file")
     parser.add_argument("--random_init", action='store_true', help="Randomize init (heading only)")
     return parser
