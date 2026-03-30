@@ -1,5 +1,4 @@
 from swarmfish.swarm_control import SwarmParams, NavParams
-from dataclasses import fields
 
 MD_FILE_NAME = "../simpleSwarmSim/logs/2026-03-27_16-09-17_PyTorch_CUDA_3D/report_3D.md"
 
@@ -43,25 +42,31 @@ def generate_SwarmParams(md_file_name: str):
     e1_obs=1.4,
     e2_obs=0.,
     )
+
     with open(md_file_name, 'r') as md:
         md_lines = md.readlines()
+
         last_gen = md_lines[-3]
         last_gen.strip()
+
         params_string = last_gen.split(' | ')[3]
         params_string = params_string.strip('|\n')
         params_string = params_string.strip()
+
         params_list = params_string.split(', ')
+
         for param in params_list:
             param = param.split("=")
+
             name = param[0]
             value = float(param[1])
+
             if hasattr(swarm_params, name):
-                print(f'name: {name}, value: {value} ({type(value)})')
-                swarm_params.name = value
+                setattr(swarm_params, name, value)
 
     return swarm_params
 
 if __name__ == "__main__":
-    swarm_params = generate_SwarmParams(MD_FILE_NAME)
-    print(swarm_params)
+    test = generate_SwarmParams(MD_FILE_NAME)
+    print(test)
 
