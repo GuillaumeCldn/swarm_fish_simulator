@@ -43,6 +43,7 @@ def generate_SwarmParams(md_file_name: str):
     e2_obs=0.,
     )
 
+#TODO: Refactor the open() out of the function
     with open(md_file_name, 'r') as md:
         md_lines = md.readlines()
 
@@ -66,7 +67,43 @@ def generate_SwarmParams(md_file_name: str):
 
     return swarm_params
 
+def generate_NavParams(md_file_name: str):
+    nav_params = NavParams(
+        max_velocity=None,
+        min_velocity=0.,
+        zmax=None,
+        zmin=None,
+    )
+
+#TODO: Refactor the open() out of the function
+    with open(md_file_name, 'r') as md:
+        md_lines = md.readlines()
+
+        config_lines = md_lines[6:29]
+
+        for line in config_lines:
+            items = line.split(' | ')
+            # print(items)
+            name = items[0]
+            value = items[1]
+
+            name = name.strip('|').strip()
+            value = value.strip().rstrip('|').strip()
+
+            print(f'name: {name}, value: {value}')
+
+            if name == 'MAX_SPEED':
+                setattr(nav_params, 'max_velocity', float(value))
+            if name == 'Z_MIN':
+                setattr(nav_params, 'zmin', float(value))
+            if name == 'Z_MAX':
+                setattr(nav_params, 'zmax', float(value))
+
+    return nav_params
+
+
 if __name__ == "__main__":
     test = generate_SwarmParams(MD_FILE_NAME)
-    print(test)
+    test1 = generate_NavParams(MD_FILE_NAME)
+    print(test1)
 
