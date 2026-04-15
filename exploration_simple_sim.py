@@ -1,5 +1,6 @@
 import sys
 
+from dataclasses import dataclass
 from PyQt6.QtWidgets import QApplication
 
 from swarm_controller_simple_sim import SwarmFish_Environment, SwamFish_View, SwarmFish_Controller, make_args_parser
@@ -18,24 +19,24 @@ SHOW_EX_AREA = True
 SHOW_CELLS = True
 SHOW_FOV = True
 SHOW_INFLUENTIALS = True
-NB_INFLUENTIAL = 1
+GET_PARAMS_FROM_YAML = True
 
 POS_NOISE = 0.
 SPEED_NOISE = 0. # 0.1
 HEADING_NOISE = 0.
+NB_INFLUENTIAL = 1
 
 OVFY_PERIOD = 10. # s, minimum duration for overfly to be registered
 SPOIL_DELAY = 60. # s, time after which spoilage should start increasing rapidly
 SPOIL_RATE = 10. # s, rate at which spoilage increases
 MAX_SPOIL = 1000. # maximum spoilage value
 FRESHEN_RATE = MAX_SPOIL/4. # amount by which spoilage is decreased when a cell is overflown
+SENSOR_VIEW_HEIGHT = 10. # m, height at which sensor resolution is average
+SENSOR_VIEW_ANGLE = 60. # °, aperture of sensor view cone
 
 CELL_HMIN = 0.1 # m
 CELL_HMAX = 1. # m
 ALPHA = CELL_HMAX/MAX_SPOIL # rate at which the cell height is updated
-
-SENSOR_VIEW_HEIGHT = 10. # m, height at which sensor resolution is average
-SENSOR_VIEW_ANGLE = 60. # °, aperture of sensor view cone
 
 FOV_COLOUR = (0.,0.,1,0.1)
 EX_AREA_COLOUR = (0.,1.,0.,1.)
@@ -215,6 +216,15 @@ class SwarmFish_Scenario(SwarmFish_Controller):
         super().__init__(ARGS, env, view)
 
         #### Init SwarmFish ########################################
+        # Parameter recuperation from yaml 
+        if GET_PARAMS_FROM_YAML:
+            ARENA_RADIUS = self.explo_params.arena_radius
+            NB_INFLUENTIAL = self.explo_params.neighbors
+            EX_AREA_LX = EX_AREA_LY = 2*ARENA_RADIUS
+            NB_CELLS_X = NB_CELLS_Y = int(2*ARENA_RADIUS*self.explo_params.grid_res)
+
+            print(EX_AREA_LX, NB_CELLS_X)
+
         # WARN: If arena is centred, cell behaviour is wrong
         arena_radius = math.sqrt(2)*ARENA_RADIUS
         arena_center = np.array([ARENA_RADIUS, ARENA_RADIUS, 0.])
@@ -352,7 +362,8 @@ class SwarmFish_Scenario(SwarmFish_Controller):
                 magnitude * math.cos(state.get_course(use_heading=True)),
                 magnitude * math.sin(state.get_course(use_heading=True)),
                 cmd.delta_vz,
-                yaw_rate])
+                yaw_rate
+                ])
             self.commands[uav_id] = speed
             
             # Compute overflown cell

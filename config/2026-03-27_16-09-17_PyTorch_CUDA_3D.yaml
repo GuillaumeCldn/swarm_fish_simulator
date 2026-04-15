@@ -1,0 +1,49 @@
+Agent:
+  SwarmParams:
+    y_w: 1.5
+    l_w: 2.5
+    e1_w: 1.0
+    e2_w: 0.25
+    y_z_w: 2.0
+    dz_w: 1.0
+    y_att: 3.9
+    l_att: 1.83
+    d0_att: 2.74
+    a_att: 0.0
+    b1_att: 0.0
+    b2_att: 0.0
+    y_ali: 1.44
+    l_ali: 2.44
+    d0_ali: 1.0
+    a_ali: 0.0
+    b1_ali: 0.0
+    b2_ali: 0.0
+    y_acc: 0.62
+    l_acc: 0.85
+    d0_v: 2.44
+    y_z: 1.0
+    l_z: 3.0
+    a_z: 1.0
+    d0_z: 0.5
+    sigma_z: 1.0
+    y_nav: 0.5
+    y_z_nav: 1.0
+    y_vz_nav: 1.0
+    y_intruder: 1.2
+    y_z_intruder: 1.0
+    l_intruder: 4.0
+    y_obs: 1.0
+    t_obs: 3.0
+    e1_obs: 1.4
+    e2_obs: 0.0
+    use_heading: false
+  NavParams:
+    max_velocity: 2.0
+    min_velocity: 0.0
+    zmax: 10.0
+    zmin: 1.0
+  ExploParams:
+    arena_radius: 50.0
+    grid_res: 5.0
+    sim_steps: 500
+    neighbors: 2
